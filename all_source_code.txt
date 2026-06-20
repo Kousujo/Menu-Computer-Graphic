@@ -1,0 +1,1935 @@
+
+==================================================
+FILE PATH: .\Computer_Graphic\main.py
+==================================================
+
+import sys
+from PyQt6.QtWidgets import QApplication
+from MainFrame import MainFrame
+
+def main():
+    app = QApplication(sys.argv)
+    
+    chuong_trinh = MainFrame()
+    chuong_trinh.show()
+    
+    sys.exit(app.exec())
+
+if __name__ == "__main__":
+    main()
+==================================================
+FILE PATH: .\Computer_Graphic\MainFrame.py
+==================================================
+
+# MainFrame.py
+from PyQt6.QtWidgets import QMainWindow, QStackedWidget, QApplication
+
+class MainFrame(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Hệ Thống Thực Hành Đồ Họa Máy Tính")
+        
+        # Đặt kích thước cửa sổ
+        self.resize(1200, 700)
+        self.can_giua_man_hinh()
+
+        # CardLayout quản lý tập trung các màn hình giao diện
+        self.card_layout_manager = QStackedWidget()
+        self.setCentralWidget(self.card_layout_manager)
+
+        # Từ điển lưu vị trí index của các màn hình
+        self.danh_sach_man_hinh = {}
+
+        # -----------------------------------------------------------------
+        # QUY HOẠCH NẠP MÔ-ĐUN TẬP TRUNG (MVC CONTROLLER)
+        # -----------------------------------------------------------------
+        # 1. Khởi tạo Menu chính (Nạp từ thư mục exercises)
+        from exercises.ExerciseListPanel import ExerciseListPanel
+        self.exercise_list_panel = ExerciseListPanel(self)
+        self.addScreen(self.exercise_list_panel, "ExerciseList")
+
+        # 2. Đăng ký danh sách các bài tập thực hành tại đây
+        self.khoi_tao_cac_bai_thuc_hanh()
+
+        # Hiển thị menu chính lúc khởi động
+        self.showScreen("ExerciseList")
+
+    def khoi_tao_cac_bai_thuc_hanh(self):
+        """
+        Nơi duy nhất bạn khai báo bài tập mới. 
+        Khi làm xong Bài 2, bạn chỉ cần mở khóa (uncomment) dòng Bài 2 mà không động vào luồng hệ thống.
+        """
+        from exercises.Bai_1 import Bai1Panel
+        self.addScreen(Bai1Panel(self), "Bai_1")
+        
+        from exercises.Bai_2 import Bai2Panel
+        self.addScreen(Bai2Panel(self), "Bai_2")
+
+        from exercises.Bai_3 import Bai3Panel
+        self.addScreen(Bai3Panel(self), "Bai_3")
+
+    def addScreen(self, widget, name):
+        self.card_layout_manager.addWidget(widget)
+        self.danh_sach_man_hinh[name] = self.card_layout_manager.indexOf(widget)
+
+    def showScreen(self, name):
+        if name in self.danh_sach_man_hinh:
+            self.card_layout_manager.setCurrentIndex(self.danh_sach_man_hinh[name])
+
+    def can_giua_man_hinh(self):
+        khung_man_hinh = QApplication.primaryScreen().availableGeometry().center() # type: ignore
+        khung_cua_so = self.frameGeometry()
+        khung_cua_so.moveCenter(khung_man_hinh)
+        self.move(khung_cua_so.topLeft())
+==================================================
+FILE PATH: .\Computer_Graphic\test_bai_3.py
+==================================================
+
+import pytest
+from PyQt6.QtCore import Qt
+from exercises.Bai_3 import Bai3Panel
+
+# Giả lập một class MainFrame tối giản để Bai3Panel không bị lỗi khi gọi self.mainframe
+class MockMainFrame:
+    pass
+
+def test_ve_ham_bac_nhat_tu_dong(qtbot):
+    # 1. Khởi tạo giao diện Bai3Panel trong môi trường test
+    mock_frame = MockMainFrame()
+    panel = Bai3Panel(mock_frame)
+    qtbot.addWidget(panel) # Đăng ký widget vào bot để kiểm soát
+    
+    # 2. Giả lập nhập liệu tự động vào các ô input
+    # Ví dụ: Sửa hệ số a thành '2' và b thành '3'
+    panel.inputs["a"].clear()
+    qtbot.keyClicks(panel.inputs["a"], "2")
+    
+    panel.inputs["b"].clear()
+    qtbot.keyClicks(panel.inputs["b"], "3")
+    
+    # 3. Giả lập tự động gọi hàm vẽ (hoặc nếu bạn có nút bấm thì giả lập click nút)
+    panel.xu_ly_logic_ve()
+    
+    # 4. KIỂM TRA TỰ ĐỘNG (Assert)
+    # Kiểm tra xem danh sách pixel sau khi vẽ có dữ liệu hay không (không bị rỗng)
+    assert len(panel.canvas.danh_sach_pixel) > 0
+    
+    # Kiểm tra xem trục tọa độ đã được đưa về chính giữa màn hình chưa (tính năng mới sửa)
+    expected_x = panel.canvas.width() / 2
+    expected_y = panel.canvas.height() / 2
+    assert panel.canvas.goc_toa_do_pan.x() == expected_x
+    assert panel.canvas.goc_toa_do_pan.y() == expected_y
+
+def test_nhap_chu_gay_loi_tu_dong(qtbot):
+    mock_frame = MockMainFrame()
+    panel = Bai3Panel(mock_frame)
+    qtbot.addWidget(panel)
+    
+    # Giả lập nhập chữ "abc" vào ô hệ số để test xem bộ bắt lỗi ValueError có hoạt động không
+    panel.inputs["a"].clear()
+    qtbot.keyClicks(panel.inputs["a"], "abc")
+    
+    # Chạy hàm vẽ, nếu code của bạn bắt lỗi tốt và hiện QMessageBox, test sẽ pass
+    panel.xu_ly_logic_ve()
+==================================================
+FILE PATH: .\Computer_Graphic\components\AnalysisOverlayPanel.py
+==================================================
+
+# components/AnalysisOverlayPanel.py
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextBrowser, QPushButton, QHBoxLayout, QLabel, QFrame
+from PyQt6.QtCore import Qt
+
+class AnalysisOverlayPanel(QWidget):
+    def __init__(self, parent_canvas):
+        """
+        Bảng báo cáo khảo sát CHỐNG XUYÊN THẤU TUYỆT ĐỐI
+        """
+        super().__init__(parent_canvas)
+        self.setObjectName("AnalysisOverlayPanel")
+        
+        self.setAutoFillBackground(True)
+        
+        self.setFixedSize(760, 530)
+        
+        self.setStyleSheet("""
+            QWidget#AnalysisOverlayPanel {
+                background-color: #0b0e17; 
+                border: 2px solid #00f0ff; 
+                border-radius: 12px;
+            }
+            QTextBrowser {
+                background-color: #0b0e17;
+                color: #e2e8f0;
+                font-family: 'Segoe UI', sans-serif;
+                font-size: 11pt;
+                padding-left: 18px;   /* ◄ Đẩy toàn bộ chữ đầu dòng lùi vào trong */
+                padding-right: 18px;  /* ◄ Giữ khoảng cách an toàn với thanh cuộn bên phải */
+                padding-top: 10px;
+            }
+            QScrollBar:vertical {
+                border: none; 
+                background: #111423; 
+                width: 10px; 
+                margin: 0px;
+                border-radius: 5px;
+            }
+            QScrollBar::handle:vertical {
+                background: #ff0055; 
+                min-height: 40px; 
+                border-radius: 5px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background: #00f0ff;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                border: none; background: none;
+            }
+        """)
+        
+        layout_chinh = QVBoxLayout(self)
+        layout_chinh.setContentsMargins(22, 18, 22, 18)
+        layout_chinh.setSpacing(12)
+        
+        # Tiêu đề
+        lbl_title = QLabel("📊 KẾT QUẢ KHẢO SÁT & BIẾN THIÊN")
+        lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lbl_title.setStyleSheet("""
+            QLabel {
+                color: #00f0ff; 
+                font-weight: 900; 
+                font-size: 14pt; 
+                font-family: 'Segoe UI'; 
+                letter-spacing: 0.5px; 
+                background-color: #0b0e17; /* Đổ nền đen đặc khử hoàn toàn xuyên thấu */
+                padding: 4px 0px;          /* Tạo khoảng giãn cách nhẹ nhàng */
+            }
+        """)
+        layout_chinh.addWidget(lbl_title)
+        
+        # Khung hiển thị nội dung HTML
+        self.txt_content = QTextBrowser()
+        self.txt_content.setFrameShape(QFrame.Shape.NoFrame)
+        layout_chinh.addWidget(self.txt_content)
+        
+        # Nút đóng
+        layout_nut = QHBoxLayout()
+        layout_nut.addStretch()
+        
+        btn_dong = QPushButton("ĐÓNG BẢNG")
+        btn_dong.setFixedSize(130, 36)
+        btn_dong.setStyleSheet("""
+            QPushButton {
+                background-color: #111423; color: #ff0055;
+                font-weight: bold; border: 2px solid #ff0055; border-radius: 6px;
+                font-family: 'Segoe UI'; font-size: 10pt;
+            }
+            QPushButton:hover { background-color: #ff0055; color: white; border: 2px solid #ffffff; }
+        """)
+        btn_dong.clicked.connect(self.hide)
+        layout_nut.addWidget(btn_dong)
+        layout_chinh.addLayout(layout_nut)
+        
+        self.hide()
+
+    def cap_nhat_du_lieu_html(self, html_text):
+        self.txt_content.setHtml(html_text)
+        self.show()
+        self.raise_()
+
+    def parent_resize_event(self, canvas_width, canvas_height):
+        """Căn giữa bảng khảo sát vào giữa Canvas chính"""
+        x = max(10, (canvas_width - self.width()) // 2)
+        y = max(10, (canvas_height - self.height()) // 2)
+        self.move(x, y)
+==================================================
+FILE PATH: .\Computer_Graphic\components\BaseGraphicPanel.py
+==================================================
+
+# BaseGraphicPanel.py
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QFrame, QPushButton, QLabel, QListWidget, QFormLayout
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QFont
+from components.GraphicArea import GraphicArea  # Import class GraphicArea từ file riêng biệt
+
+class BaseGraphicPanel(QWidget):
+    def __init__(self, mainframe, title_sidebar="DANH SÁCH YÊU CẦU"):
+        super().__init__()
+        self.mainframe = mainframe
+        
+        self.font_chu_he_thong = QFont("Segoe UI", 14)
+        self.setFont(self.font_chu_he_thong)
+        self.setStyleSheet("background-color: #f8fafc;")
+
+        layout_tong = QHBoxLayout(self)
+        layout_tong.setContentsMargins(10, 10, 10, 10)
+        layout_tong.setSpacing(12)
+
+        # =================================================================
+        # KHU VỰC BÊN TRÁI: CANVAS VÀ PANEL NHẬP LIỆU DYNAMIC
+        # =================================================================
+        vung_trai = QWidget()
+        layout_trai = QVBoxLayout(vung_trai)
+        layout_trai.setContentsMargins(0, 0, 0, 0)
+
+        self.canvas = GraphicArea()
+        layout_trai.addWidget(self.canvas)
+
+        self.panel_nhap_lieu = QFrame(self.canvas)
+        self.panel_nhap_lieu.setGeometry(20, 20, 340, 50) 
+        self.panel_nhap_lieu.setStyleSheet("""
+            QFrame#PanelNoi {
+                background-color: #1e293b; 
+                border: 1px solid #334155; 
+                border-radius: 8px;
+            }
+            QLabel {
+                color: #f1f5f9; 
+                font-size: 10pt; 
+                font-weight: 600;
+                border: none;
+                background: transparent;
+            }
+            QLineEdit {
+                background-color: #334155; 
+                color: #38bdf8; 
+                border: 1px solid #475569; 
+                border-radius: 4px; 
+                padding: 6px; 
+                min-height: 25px;
+                font-size: 11pt;
+                font-weight: bold;
+            }
+            QLineEdit:focus {
+                border: 1px solid #38bdf8;
+            }
+        """)
+        self.panel_nhap_lieu.setObjectName("PanelNoi")
+        
+        layout_noi = QVBoxLayout(self.panel_nhap_lieu)
+        layout_noi.setContentsMargins(12, 12, 12, 12)
+
+        self.btn_an_hien_form = QPushButton("Thu gọn bảng điều khiển ▲")
+        self.btn_an_hien_form.setStyleSheet("""
+            QPushButton {
+                font-size: 10pt; font-weight: bold; padding: 5px; 
+                border: 1px solid #475569; border-radius: 4px;
+                background-color: #334155; color: #cbd5e1;
+            }
+            QPushButton:hover { background-color: #475569; color: #ffffff; }
+        """)
+        self.btn_an_hien_form.clicked.connect(self.xu_ly_an_hien_panel)
+        layout_noi.addWidget(self.btn_an_hien_form)
+
+        # Khung chứa layout nhập liệu chính
+        self.khung_input = QWidget()
+        self.khung_input.setStyleSheet("background: transparent; border: none;")
+        self.form_layout = QFormLayout(self.khung_input)
+        self.form_layout.setContentsMargins(0, 8, 0, 0)
+        self.form_layout.setVerticalSpacing(8)
+        layout_noi.addWidget(self.khung_input)
+
+        layout_tong.addWidget(vung_trai, stretch=1)
+
+        # =================================================================
+        # KHU VỰC BÊN PHẢI: SIDEBAR
+        # =================================================================
+        self.sidebar_phai = QFrame()
+        self.sidebar_phai.setFixedWidth(310)
+        self.sidebar_phai.setStyleSheet("""
+            QFrame { background-color: #0f172a; border-radius: 8px; }
+            QLabel { color: #ffffff; border: none; }
+        """)
+        
+        layout_sb = QVBoxLayout(self.sidebar_phai)
+        layout_sb.setContentsMargins(18, 20, 18, 20)
+
+        self.lbl_sb_title = QLabel(title_sidebar)
+        self.lbl_sb_title.setStyleSheet("font-weight: 800; font-size: 12pt; color: #38bdf8; letter-spacing: 1px;")
+        layout_sb.addWidget(self.lbl_sb_title, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout_sb.addSpacing(10)
+
+        self.list_yeu_cau = QListWidget()
+        self.list_yeu_cau.setStyleSheet("""
+            QListWidget {
+                border: 1px solid #1e293b; border-radius: 6px;
+                background-color: #1e293b; color: #e2e8f0;
+                font-size: 10pt; font-weight: 500; padding: 5px;
+                outline: none;
+            }
+            QListWidget::item {
+                padding: 10px; border-radius: 4px; margin-bottom: 4px;
+            }
+            QListWidget::item:hover {
+                background-color: #334155; color: #38bdf8;
+            }
+            QListWidget::item:selected {
+                background-color: #0284c7; color: #ffffff; font-weight: bold;
+            }
+            QListWidget::focus {
+                border: 1px solid #1e293b;
+            }
+        """)
+        layout_sb.addWidget(self.list_yeu_cau)
+        layout_sb.addSpacing(15)
+
+        self.btn_ve_hinh = QPushButton("KÍCH HOẠT VẼ HÌNH")
+        self.btn_ve_hinh.setFixedHeight(46)
+        self.btn_ve_hinh.setStyleSheet("""
+            QPushButton {
+                font-weight: 800; font-size: 10pt; letter-spacing: 0.5px;
+                border: none; border-radius: 6px;
+                background-color: #0ea5e9; color: #ffffff;
+            }
+            QPushButton:hover { background-color: #0284c7; }
+            QPushButton:pressed { background-color: #0369a1; }
+        """)
+        self.btn_ve_hinh.clicked.connect(self.xu_ly_logic_ve)
+        layout_sb.addWidget(self.btn_ve_hinh)
+        layout_sb.addSpacing(6)
+
+        btn_thoat_bai = QPushButton("QUAY LẠI TRANG CHỦ")
+        btn_thoat_bai.setFixedHeight(42)
+        btn_thoat_bai.setStyleSheet("""
+            QPushButton {
+                font-weight: 600; font-size: 9pt;
+                border: 1px solid #334155; border-radius: 6px;
+                background-color: #1e293b; color: #94a3b8;
+            }
+            QPushButton:hover { background-color: #334155; color: #f1f5f9; border: 1px solid #475569; }
+        """)
+        btn_thoat_bai.clicked.connect(lambda: self.mainframe.showScreen("ExerciseList"))
+        layout_sb.addWidget(btn_thoat_bai)
+
+        layout_tong.addWidget(self.sidebar_phai)
+
+    def tao_duong_ngan_cach(self):
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Plain)
+        line.setStyleSheet("color: #334155; background-color: #334155; max-height: 1px; border: none; margin: 2px 0px;")
+        return line
+
+    def xoa_toan_bo_input(self):
+        while self.form_layout.count() > 0:
+            item = self.form_layout.takeAt(0)
+            widget = item.widget()  # type: ignore
+            if widget:
+                widget.setParent(None)
+                widget.deleteLater()
+
+    def xu_ly_an_hien_panel(self):
+        if self.khung_input.isVisible():
+            self.khung_input.hide()
+            self.panel_nhap_lieu.setFixedHeight(45)
+            self.btn_an_hien_form.setText("Mở rộng bảng điều khiển ▼")
+        else:
+            self.khung_input.show()
+            self.panel_nhap_lieu.setMinimumHeight(0)
+            self.panel_nhap_lieu.setMaximumHeight(16777215)
+            self.cap_nhat_kich_thuoc_panel()
+            self.btn_an_hien_form.setText("Thu gọn bảng điều khiển ▲")
+
+    def cap_nhat_kich_thuoc_panel(self):
+        if self.khung_input.isVisible():
+            QTimer.singleShot(1, self._thuc_thi_co_gian)
+
+    def _thuc_thi_co_gian(self):
+        if self.panel_nhap_lieu.layout():
+            self.panel_nhap_lieu.layout().activate() # type: ignore
+        self.panel_nhap_lieu.adjustSize()
+        self.panel_nhap_lieu.setFixedWidth(340)
+
+    def xu_ly_logic_ve(self):
+        pass
+==================================================
+FILE PATH: .\Computer_Graphic\components\GraphFunctionPanel.py
+==================================================
+
+# components/GraphFunctionPanel.py
+from typing import override
+
+from components.BaseGraphicPanel import BaseGraphicPanel
+from PyQt6.QtWidgets import QPushButton, QHBoxLayout, QMessageBox
+
+class GraphFunctionPanel(BaseGraphicPanel):
+    def __init__(self, mainframe, title_sidebar="KHẢO SÁT HÀM SỐ"):
+        super().__init__(mainframe, title_sidebar=title_sidebar)
+        
+        self.chỉnh_sua_nut_sidebar()
+
+    def chỉnh_sua_nut_sidebar(self):
+        """
+        Bóc tách nút cũ và sắp xếp lại layout nút bấm theo hàng ngang
+        để tích hợp thêm nút Khảo sát mà không làm vỡ giao diện.
+        """
+        self.btn_ve_hinh.hide()
+        
+        self.btn_khao_sat = QPushButton("KHẢO SÁT")
+        self.btn_khao_sat.setFixedHeight(46)
+        self.btn_khao_sat.setStyleSheet("""
+            QPushButton {
+                font-weight: 800; font-size: 10pt; letter-spacing: 0.5px;
+                border: None; border-radius: 6px;
+                background-color: #10b981; color: #ffffff; /* Màu xanh lá đặc trưng cho khảo sát */
+            }
+            QPushButton:hover { background-color: #059669; }
+            QPushButton:pressed { background-color: #047857; }
+        """)
+        
+        self.btn_ve_hinh_moi = QPushButton("VẼ ĐỒ THỊ")
+        self.btn_ve_hinh_moi.setFixedHeight(46)
+        self.btn_ve_hinh_moi.setStyleSheet("""
+            QPushButton {
+                font-weight: 800; font-size: 10pt; letter-spacing: 0.5px;
+                border: None; border-radius: 6px;
+                background-color: #0ea5e9; color: #ffffff;
+            }
+            QPushButton:hover { background-color: #0284c7; }
+            QPushButton:pressed { background-color: #0369a1; }
+        """)
+        
+        layout_hang_nut = QHBoxLayout()
+        layout_hang_nut.setSpacing(8)
+        layout_hang_nut.addWidget(self.btn_ve_hinh_moi, stretch=1)
+        layout_hang_nut.addWidget(self.btn_khao_sat, stretch=1)
+        
+        layout_sb = self.sidebar_phai.layout()
+        
+        layout_sb.insertLayout(4, layout_hang_nut)  # type: ignore
+        layout_sb.insertSpacing(5, 6) # type: ignore
+        
+        self.btn_ve_hinh_moi.clicked.connect(self.xu_ly_logic_ve)
+        self.btn_khao_sat.clicked.connect(self.xu_ly_logic_khao_sat)
+
+    def xu_ly_logic_khao_sat(self):
+        pass
+
+    def xu_ly_logic_ve(self):
+        pass
+==================================================
+FILE PATH: .\Computer_Graphic\components\GraphicArea.py
+==================================================
+
+# GraphicArea.py
+from PyQt6.QtWidgets import QWidget
+from PyQt6.QtCore import Qt, QPointF
+from PyQt6.QtGui import QPainter, QColor, QPen, QTransform
+
+class GraphicArea(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setStyleSheet("background-color: #ffffff; border: 2px solid #e0e0e0; border-radius: 8px;")
+        self.danh_sach_pixel = []
+        
+        self.he_so_zoom = 1.0
+        self.goc_toa_do_pan = QPointF(0, 0)
+        self.vi_tri_chuot_cu = QPointF()
+        self.dang_keo_chuot = False
+
+    def dat_lai_khung_nhin(self):
+        self.he_so_zoom = 1.0
+        self.goc_toa_do_pan = QPointF(0, 0)
+        self.update()
+
+    def cap_nhat_hinh_ve(self, danh_sach_pixel):
+        self.danh_sach_pixel = danh_sach_pixel
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        
+        # 1. Bật khử răng cưa riêng cho đường lưới để nét đứt không bị gãy
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+
+        # 2. Áp dụng ma trận biến đổi (Zoom và Pan)
+        ma_tran = QTransform()
+        ma_tran.translate(self.goc_toa_do_pan.x(), self.goc_toa_do_pan.y())
+        ma_tran.scale(self.he_so_zoom, self.he_so_zoom)
+        painter.setTransform(ma_tran)
+
+        # =================================================================
+        # VẼ LƯỚI TỌA ĐỘ
+        # =================================================================
+        but_luoi = QPen(QColor("#cbd5e1"), 1, Qt.PenStyle.DashLine)
+        painter.setPen(but_luoi)
+
+        khoang_cach_o_luoi = 100
+        gioi_han_ao = 4000 
+
+        # Vẽ lưới dọc
+        for x in range(-gioi_han_ao, gioi_han_ao, khoang_cach_o_luoi):
+            painter.drawLine(x, -gioi_han_ao, x, gioi_han_ao)
+
+        # Vẽ lưới ngang
+        for y in range(-gioi_han_ao, gioi_han_ao, khoang_cach_o_luoi):
+            painter.drawLine(-gioi_han_ao, y, gioi_han_ao, y)
+            
+        # Trục gốc (0,0) làm đậm hẳn lên để làm mốc tọa độ chính
+        but_truc_goc = QPen(QColor("#94a3b8"), 1.5, Qt.PenStyle.SolidLine)
+        painter.setPen(but_truc_goc)
+        painter.drawLine(0, -gioi_han_ao, 0, gioi_han_ao)
+        painter.drawLine(-gioi_han_ao, 0, gioi_han_ao, 0)
+
+        # =================================================================
+        # VẼ HÌNH CHÍNH (Nét dày pixel nguyên bản)
+        # =================================================================
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+        painter.setPen(QPen(QColor("#1e293b"), 3)) 
+        
+        for x, y in self.danh_sach_pixel:
+            painter.drawPoint(x, y)
+
+    def wheelEvent(self, event):
+        if event.angleDelta().y() > 0:
+            self.he_so_zoom *= 1.15
+        else:
+            self.he_so_zoom /= 1.15
+        self.he_so_zoom = max(0.2, min(self.he_so_zoom, 30.0))
+        self.update()
+
+    def mousePressEvent(self, event):
+        if event.button() in [Qt.MouseButton.RightButton, Qt.MouseButton.MiddleButton]:
+            self.dang_keo_chuot = True
+            self.vi_tri_chuot_cu = event.position()
+
+    def mouseMoveEvent(self, event):
+        if self.dang_keo_chuot:
+            vi_tri_hien_tai = event.position()
+            self.goc_toa_do_pan += (vi_tri_hien_tai - self.vi_tri_chuot_cu)
+            self.vi_tri_chuot_cu = vi_tri_hien_tai
+            self.update()
+
+    def mouseReleaseEvent(self, event):
+        if event.button() in [Qt.MouseButton.RightButton, Qt.MouseButton.MiddleButton]:
+            self.dang_keo_chuot = False
+==================================================
+FILE PATH: .\Computer_Graphic\components\__init__.py
+==================================================
+
+
+==================================================
+FILE PATH: .\Computer_Graphic\core\algorithms.py
+==================================================
+
+# core/algorithms.py
+
+def bresenham_line(x1, y1, x2, y2):
+    pixels = []
+    dx = abs(x2 - x1)
+    dy = abs(y2 - y1)
+    sx = 1 if x1 < x2 else -1
+    sy = 1 if y1 < y2 else -1
+    err = dx - dy
+
+    while True:
+        pixels.append((x1, y1))
+        if x1 == x2 and y1 == y2:
+            break
+        e2 = 2 * err
+        if e2 > -dy:
+            err -= dy
+            x1 += sx
+        if e2 < dx:
+            err += dx
+            y1 += sy
+    return pixels
+
+def midpoint_circle(xc, yc, r):
+    """
+    THUẬT TOÁN MIDPOINT VẼ ĐƯỜNG TRÒN
+    - Nhận vào: Tọa độ tâm (xc, yc) và bán kính R.
+    - Trả về: Danh sách các pixel (x, y) tạo nên đường tròn.
+    - Nguyên lý: Chỉ tính toán cho 1/8 đường tròn (từ góc 90 độ đến 45 độ),
+      sau đó lấy đối xứng gương ra 8 phần để được đường tròn hoàn chỉnh.
+    """
+    pixels = []
+    x = 0
+    y = r
+    p = 1 - r  # Biến quyết định (Decision Parameter) ban đầu
+
+    def duyet_8_diem(xc, yc, x, y):
+        """ Hàm lấy đối xứng 1 điểm ra 8 vùng của đường tròn """
+        return [
+            (xc + x, yc + y), (xc - x, yc + y), (xc + x, yc - y), (xc - x, yc - y),
+            (xc + y, yc + x), (xc - y, yc + x), (xc + y, yc - x), (xc - y, yc - x)
+        ]
+
+    # Nạp 8 điểm xuất phát đầu tiên (tại các đỉnh trục tọa độ)
+    pixels.extend(duyet_8_diem(xc, yc, x, y))
+
+    # Vòng lặp tính toán cho đến khi đường phân giác x = y cắt đồ thị (hết 1/8 đường tròn)
+    while x < y:
+        x += 1
+        if p < 0:
+            # Điểm tiếp theo nằm bên trong đường tròn tròn -> Chọn điểm (x+1, y)
+            p = p + 2 * x + 1
+        else:
+            # Điểm tiếp theo nằm ngoài đường tròn -> Chọn hạ xuống (x+1, y-1)
+            y -= 1
+            p = p + 2 * (x - y) + 1
+        
+        # Lấy đối xứng các điểm mới tính được sang 8 hướng
+        pixels.extend(duyet_8_diem(xc, yc, x, y))
+        
+    return pixels
+
+# algorithms.py
+
+def midpoint_ellipse(xc, yc, rx, ry):
+    """
+    THUẬT TOÁN MIDPOINT VẼ HÌNH ELIP
+    - Nhận vào: Tâm (xc, yc), bán kính lớn rx, bán kính nhỏ ry.
+    - Nguyên lý: Duyệt 1/4 hình elip ở góc phần tư thứ nhất, chia làm 2 miền:
+      + Miền 1: Độ dốc tiếp tuyến < 1 (dx < dy) -> Tăng x, quyết định y.
+      + Miền 2: Độ dốc tiếp tuyến > 1 (dx >= dy) -> Giảm y, quyết định x.
+      Sau đó lấy đối xứng gương ra 4 hướng.
+    """
+    pixels = []
+    x = 0
+    y = ry
+
+    # Các biến bình phương bổ trợ để tối ưu tốc độ tính toán
+    rx2 = rx * rx
+    ry2 = ry * ry
+    two_rx2 = 2 * rx2
+    two_ry2 = 2 * ry2
+
+    def duyet_4_diem(xc, yc, x, y):
+        """ Hàm lấy đối xứng 1 điểm ra 4 góc phần tư của Elip """
+        return [
+            (xc + x, yc + y), (xc - x, yc + y),
+            (xc + x, yc - y), (xc - x, yc - y)
+        ]
+
+    # -----------------------------------------------------------------
+    # MIỀN 1: Tiếp tuyến có độ dốc < 1 (dx < dy)
+    # -----------------------------------------------------------------
+    p1 = ry2 - (rx2 * ry) + (0.25 * rx2)
+    dx = two_ry2 * x
+    dy = two_rx2 * y
+
+    while dx < dy:
+        pixels.extend(duyet_4_diem(xc, yc, x, y))
+        x += 1
+        if p1 < 0:
+            dx = dx + two_ry2
+            p1 = p1 + dx + ry2
+        else:
+            y -= 1
+            dx = dx + two_ry2
+            dy = dy - two_rx2
+            p1 = p1 + dx - dy + ry2
+            
+    # -----------------------------------------------------------------
+    # MIỀN 2: Tiếp tuyến có độ dốc >= 1 (dx >= dy)
+    # -----------------------------------------------------------------
+    p2 = (ry2 * (x + 0.5) * (x + 0.5)) + (rx2 * (y - 1) * (y - 1)) - (rx2 * ry2)
+
+    while y >= 0:
+        pixels.extend(duyet_4_diem(xc, yc, x, y))
+        y -= 1
+        if p2 > 0:
+            dy = dy - two_rx2
+            p2 = p2 + rx2 - dy
+        else:
+            x += 1
+            dx = dx + two_ry2
+            dy = dy - two_rx2
+            p2 = p2 + dx - dy + rx2
+
+    return pixels
+
+def math_to_pixel(x_math, y_math, x_tam, y_tam, scale=40):
+    """
+    Ánh xạ tọa độ Đề-các (thực) sang tọa độ Pixel màn hình (nguyên)
+    - scale: số pixel tương ứng với 1 đơn vị toán học (mặc định 40px = 1đv)
+    - Trục Y toán học hướng lên, trục Y màn hình hướng xuống dưới nên phải trừ (-)
+    """
+    x_pixel = int(round(x_tam + x_math * scale))
+    y_pixel = int(round(y_tam - y_math * scale))
+    return x_pixel, y_pixel
+==================================================
+FILE PATH: .\Computer_Graphic\core\geometry_1.py
+==================================================
+
+# core/geometry.py
+import math
+from core.algorithms import bresenham_line, midpoint_circle
+
+def get_triangle_pixels(x_tam, y_tam, a, b, c):
+    if not ((a + b > c) and (a + c > b) and (b + c > a)):
+        return []
+    d_tu_b = (a**2 + c**2 - b**2) // (2 * a) if a != 0 else 0
+    chieu_cao = int(math.sqrt(max(0, c**2 - d_tu_b**2)))
+    
+    xb, yb = x_tam - a // 2, y_tam + chieu_cao // 2
+    xc, yc = x_tam + a // 2, y_tam + chieu_cao // 2
+    xa, ya = xb + d_tu_b, y_tam - chieu_cao // 2
+
+    return bresenham_line(xa, ya, xb, yb) + \
+           bresenham_line(xb, yb, xc, yc) + \
+           bresenham_line(xc, yc, xa, ya)
+
+def get_rectangle_pixels(x_tam, y_tam, rong, cao):
+    r_w, r_h = rong // 2, cao // 2
+    return bresenham_line(x_tam - r_w, y_tam - r_h, x_tam + r_w, y_tam - r_h) + \
+           bresenham_line(x_tam + r_w, y_tam - r_h, x_tam + r_w, y_tam + r_h) + \
+           bresenham_line(x_tam + r_w, y_tam + r_h, x_tam - r_w, y_tam + r_h) + \
+           bresenham_line(x_tam - r_w, y_tam + r_h, x_tam - r_w, y_tam - r_h)
+
+def get_parallelogram_pixels(x_tam, y_tam, day, cao, do_nghieng):
+    r_w, r_h = day // 2, cao // 2
+    xa, ya = x_tam - r_w + do_nghieng, y_tam - r_h
+    xb, yb = x_tam + r_w + do_nghieng, y_tam - r_h
+    xc, yc = x_tam + r_w, y_tam + r_h
+    xd, yd = x_tam - r_w, y_tam + r_h
+    return bresenham_line(xa, ya, xb, yb) + \
+           bresenham_line(xb, yb, xc, yc) + \
+           bresenham_line(xc, yc, xd, yd) + \
+           bresenham_line(xd, yd, xa, ya)
+
+def get_rhombus_pixels(x_tam, y_tam, cheo_x, cheo_y):
+    rx, ry = cheo_x // 2, cheo_y // 2
+    return bresenham_line(x_tam, y_tam - ry, x_tam + rx, y_tam) + \
+           bresenham_line(x_tam + rx, y_tam, x_tam, y_tam + ry) + \
+           bresenham_line(x_tam, y_tam + ry, x_tam - rx, y_tam) + \
+           bresenham_line(x_tam - rx, y_tam, x_tam, y_tam - ry)
+
+def get_isosceles_trapezoid_pixels(x_tam, y_tam, day_lon, day_nho, cao):
+    r_lon, r_nho, r_h = day_lon // 2, day_nho // 2, cao // 2
+    xa, ya = x_tam - r_nho, y_tam - r_h
+    xb, yb = x_tam + r_nho, y_tam - r_h
+    xc, yc = x_tam + r_lon, y_tam + r_h
+    xd, yd = x_tam - r_lon, y_tam + r_h
+    return bresenham_line(xa, ya, xb, yb) + \
+           bresenham_line(xb, yb, xc, yc) + \
+           bresenham_line(xc, yc, xd, yd) + \
+           bresenham_line(xd, yd, xa, ya)
+
+def get_regular_polygon_pixels(x_tam, y_tam, n, r):
+    if n < 3:
+        return []
+    pixels = []
+    danh_sach_dinh = []
+    for i in range(n):
+        goc = i * (2 * math.pi / n) - math.pi / 2
+        danh_sach_dinh.append((int(x_tam + r * math.cos(goc)), int(y_tam + r * math.sin(goc))))
+    for i in range(n):
+        pixels += bresenham_line(danh_sach_dinh[i][0], danh_sach_dinh[i][1], 
+                                 danh_sach_dinh[(i + 1) % n][0], danh_sach_dinh[(i + 1) % n][1])
+    return pixels
+
+def get_star_pixels(x_tam, y_tam, r_ngoai, r_trong):
+    tong_so_dinh = 10
+    pixels = []
+    danh_sach_dinh = []
+    for i in range(tong_so_dinh):
+        goc = i * (2 * math.pi / tong_so_dinh) - math.pi / 2
+        r_hien_tai = r_ngoai if i % 2 == 0 else r_trong
+        danh_sach_dinh.append((int(x_tam + r_hien_tai * math.cos(goc)), int(y_tam + r_hien_tai * math.sin(goc))))
+    for i in range(tong_so_dinh):
+        pixels += bresenham_line(danh_sach_dinh[i][0], danh_sach_dinh[i][1], 
+                                 danh_sach_dinh[(i + 1) % tong_so_dinh][0], danh_sach_dinh[(i + 1) % tong_so_dinh][1])
+    return pixels
+
+def get_circle_pixels(x_tam, y_tam, r):
+    """
+    HÀM VẼ HÌNH TRÒN ĐƠN BẰNG MIDPOINT
+    """
+    if r <= 0:
+        return []
+    return midpoint_circle(x_tam, y_tam, r)
+
+def get_concentric_circles_pixels(x_tam, y_tam, r_ngoai, r_trong):
+    """
+    HÀM VẼ CẶP ĐƯỜNG TRÒN ĐỒNG TÂM
+    - Ứng dụng: Vẽ bánh xe, vòng nhẫn, mục tiêu bắn cung...
+    """
+    if r_ngoai <= 0 or r_trong <= 0:
+        return []
+    # Vẽ đường tròn lớn cộng nối tiếp với đường tròn nhỏ
+    return midpoint_circle(x_tam, y_tam, r_ngoai) + midpoint_circle(x_tam, y_tam, r_trong)
+==================================================
+FILE PATH: .\Computer_Graphic\core\geometry_2.py
+==================================================
+
+# core/geometry_2.py
+import math
+from core.algorithms import bresenham_line, midpoint_circle
+
+def get_target_pixels(x_tam, y_tam, basic_r, so_vong):
+    """Hình 1: Hệ 4 đường tròn đồng tâm (Bia bắn cung)"""
+    pixels = []
+    for i in range(1, so_vong + 1):
+        pixels.extend(midpoint_circle(x_tam, y_tam, basic_r * i))
+    return pixels
+
+def get_flower_8_petals_pixels(x_tam, y_tam, r, r_nho):
+    """Hình 2: Trục hoa tiêu chuẩn quay vòng với 8 đường tròn nhỏ xung quanh (Đã sửa lỗi đâm xuyên)"""
+    pixels = []
+    
+    for i in range(8):
+        goc = i * (math.pi / 4)
+        
+        # 1. Xác định vị trí tâm của đường tròn nhỏ ở đầu mút (giữ nguyên để không lệch vị trí hình)
+        xf = int(x_tam + r * math.cos(goc))
+        yf = int(y_tam + r * math.sin(goc))
+        
+        # 2. Tính toán điểm kết thúc mới của đoạn thẳng (rút ngắn đi một đoạn r_nho)
+        r_thuc_te = max(0, r - r_nho)
+        x_riem = int(x_tam + r_thuc_te * math.cos(goc))
+        y_riem = int(y_tam + r_thuc_te * math.sin(goc))
+        
+        # 3. Vẽ nan thẳng bằng Bresenham nhưng chỉ nối từ tâm chính tới sát rìa biên đường tròn nhỏ
+        pixels.extend(bresenham_line(x_tam, y_tam, x_riem, y_riem))
+        
+        # 4. Vẽ đường tròn nhỏ ở đầu mút bằng Midpoint
+        pixels.extend(midpoint_circle(xf, yf, r_nho))
+        
+    return pixels
+
+def get_flower_24_petals_pixels(x_tam, y_tam, r, R_ngoai):
+    """Hình 3: Hoa văn đan kết từ 24 đường tròn nhỏ xoay quanh tâm"""
+    pixels = []
+    for i in range(24):
+        goc = i * (2 * math.pi / 24)
+        xi = int(x_tam + R_ngoai * math.cos(goc))
+        yi = int(y_tam + R_ngoai * math.sin(goc))
+        pixels.extend(midpoint_circle(xi, yi, r))
+    return pixels
+
+def get_wheel_with_spokes_pixels(x_tam, y_tam, r):
+    """Hình 4: Vòng tròn ảo diệu kết hợp từ nhiều lớp nan hoa đan xen"""
+    pixels = []
+    so_vong = 36
+    for i in range(so_vong):
+        goc = i * (2 * math.pi / so_vong)
+        xi = int(x_tam + (r // 3) * math.cos(goc))
+        yi = int(y_tam + (r // 3) * math.sin(goc))
+        pixels.extend(midpoint_circle(xi, yi, r))
+    return pixels
+
+def get_circular_pattern_8_petals_pixels(x_tam, y_tam, R):
+    """Hình 5: Chuỗi tổ hợp đối xứng gồm 8 đường tròn giao nhau tại tâm"""
+    pixels = []
+    for i in range(8):
+        goc = i * (math.pi / 4)
+        xi = int(x_tam + R * math.cos(goc))
+        yi = int(y_tam + R * math.sin(goc))
+        pixels.extend(midpoint_circle(xi, yi, R))
+    return pixels
+
+def get_star_with_inner_circle_pixels(x_tam, y_tam, r, r_ngoai):
+    """Hình 6: Đường tròn nội tiếp lồng trong ngôi sao nhiều múi nhọn"""
+    pixels = []
+    pixels.extend(midpoint_circle(x_tam, y_tam, r))
+
+    so_dinh = 24  # Số múi răng cưa đan xung quanh
+    for i in range(so_dinh):
+        goc = i * (2 * math.pi / so_dinh)
+        ri = r_ngoai if i % 2 == 0 else r
+        xi = int(x_tam + ri * math.cos(goc))
+        yi = int(y_tam + ri * math.sin(goc))
+        
+        goc_ke = (i + 1) * (2 * math.pi / so_dinh)
+        ri_ke = r if i % 2 == 0 else r_ngoai
+        xf_ke = int(x_tam + ri_ke * math.cos(goc_ke))
+        yf_ke = int(y_tam + ri_ke * math.sin(goc_ke))
+        
+        pixels.extend(bresenham_line(xi, yi, xf_ke, yf_ke))
+    return pixels
+==================================================
+FILE PATH: .\Computer_Graphic\core\geometry_3.py
+==================================================
+
+# core/geometry_3.py
+import math
+from core.algorithms import bresenham_line, math_to_pixel
+
+def get_line_function_pixels(x_tam, y_tam, a, b, x_min=-15, x_max=15, step=0.1, scale=40):
+    """1. Hàm bậc nhất: y = ax + b"""
+    pixel_points = []
+    x = x_min
+    while x <= x_max:
+        y = a * x + b
+        pixel_points.append(math_to_pixel(x, y, x_tam, y_tam, scale))
+        x += step
+
+    pixels = []
+    for i in range(len(pixel_points) - 1):
+        pixels.extend(bresenham_line(pixel_points[i][0], pixel_points[i][1], pixel_points[i+1][0], pixel_points[i+1][1]))
+    return pixels
+
+def get_quadratic_function_pixels(x_tam, y_tam, a, b, c, x_min=-15, x_max=15, step=0.05, scale=40):
+    """2. Hàm bậc hai (Parabol): y = ax^2 + bx + c"""
+    pixel_points = []
+    x = x_min
+    while x <= x_max:
+        y = a * (x**2) + b * x + c
+        pixel_points.append(math_to_pixel(x, y, x_tam, y_tam, scale))
+        x += step
+
+    pixels = []
+    for i in range(len(pixel_points) - 1):
+        pixels.extend(bresenham_line(pixel_points[i][0], pixel_points[i][1], pixel_points[i+1][0], pixel_points[i+1][1]))
+    return pixels
+
+def get_cubic_function_pixels(x_tam, y_tam, a, b, c, d, x_min=-15, x_max=15, step=0.05, scale=40):
+    """3. Hàm bậc ba: y = ax^3 + bx^2 + cx + d"""
+    pixel_points = []
+    x = x_min
+    while x <= x_max:
+        y = a * (x**3) + b * (x**2) + c * x + d
+        pixel_points.append(math_to_pixel(x, y, x_tam, y_tam, scale))
+        x += step
+
+    pixels = []
+    for i in range(len(pixel_points) - 1):
+        pixels.extend(bresenham_line(pixel_points[i][0], pixel_points[i][1], pixel_points[i+1][0], pixel_points[i+1][1]))
+    return pixels
+
+def get_rational_1_1_pixels(x_tam, y_tam, a, b, c, d, x_min=-15, x_max=15, step=0.02, scale=40):
+    """4. Hàm phân thức bậc 1 / bậc 1: y = (ax + b) / (cx + d)"""
+    pixels = []
+    
+    # Xác định điểm tiệm cận đứng: cx + d = 0 -> x = -d/c
+    if c == 0:  # Trở thành hàm bậc nhất nếu c = 0
+        # Nếu cả c và d = 0 thì mẫu số luôn 0 -> không xác định
+        if d == 0:
+            return []
+        return get_line_function_pixels(x_tam, y_tam, a/d, b/d, x_min, x_max, step, scale)
+        
+    tiem_can_dung = -d / c
+    epsilon = 0.05  # Khoảng cách an toàn để ngắt không nối đường thẳng qua tiệm cận
+    
+    # Nhánh 1: chạy từ x_min đến sát tiệm cận đứng bên trái
+    pixel_points_1 = []
+    x = x_min
+    while x < tiem_can_dung - epsilon:
+        y = (a * x + b) / (c * x + d)
+        pixel_points_1.append(math_to_pixel(x, y, x_tam, y_tam, scale))
+        x += step
+        
+    # Nhánh 2: chạy từ sát tiệm cận đứng bên phải đến x_max
+    pixel_points_2 = []
+    x = tiem_can_dung + epsilon
+    while x <= x_max:
+        y = (a * x + b) / (c * x + d)
+        pixel_points_2.append(math_to_pixel(x, y, x_tam, y_tam, scale))
+        x += step
+
+    # Nối pixel độc lập cho từng nhánh để không bị dính đường thẳng dọc sai quy tắc
+    for i in range(len(pixel_points_1) - 1):
+        pixels.extend(bresenham_line(pixel_points_1[i][0], pixel_points_1[i][1], pixel_points_1[i+1][0], pixel_points_1[i+1][1]))
+    for i in range(len(pixel_points_2) - 1):
+        pixels.extend(bresenham_line(pixel_points_2[i][0], pixel_points_2[i][1], pixel_points_2[i+1][0], pixel_points_2[i+1][1]))
+        
+    return pixels
+
+def get_rational_2_1_pixels(x_tam, y_tam, a, b, c, d, e, x_min=-15, x_max=15, step=0.02, scale=40):
+    """5. Hàm phân thức bậc 2 / bậc 1: y = (ax^2 + bx + c) / (dx + e)"""
+    pixels = []
+    if d == 0:
+        return []
+        
+    tiem_can_dung = -e / d
+    epsilon = 0.05
+    
+    # Nhánh 1
+    pixel_points_1 = []
+    x = x_min
+    while x < tiem_can_dung - epsilon:
+        y = (a * (x**2) + b * x + c) / (d * x + e)
+        pixel_points_1.append(math_to_pixel(x, y, x_tam, y_tam, scale))
+        x += step
+        
+    # Nhánh 2
+    pixel_points_2 = []
+    x = tiem_can_dung + epsilon
+    while x <= x_max:
+        y = (a * (x**2) + b * x + c) / (d * x + e)
+        pixel_points_2.append(math_to_pixel(x, y, x_tam, y_tam, scale))
+        x += step
+
+    for i in range(len(pixel_points_1) - 1):
+        pixels.extend(bresenham_line(pixel_points_1[i][0], pixel_points_1[i][1], pixel_points_1[i+1][0], pixel_points_1[i+1][1]))
+    for i in range(len(pixel_points_2) - 1):
+        pixels.extend(bresenham_line(pixel_points_2[i][0], pixel_points_2[i][1], pixel_points_2[i+1][0], pixel_points_2[i+1][1]))
+        
+    return pixels
+==================================================
+FILE PATH: .\Computer_Graphic\core\__init__.py
+==================================================
+
+# Expose geometry modules for easier importing
+from . import geometry_1, geometry_2, geometry_3, algorithms
+
+__all__ = ['geometry_1', 'geometry_2', 'geometry_3', 'algorithms']
+
+==================================================
+FILE PATH: .\Computer_Graphic\exercises\Bai_1.py
+==================================================
+
+# exercises/Bai_1.py
+from components.BaseGraphicPanel import BaseGraphicPanel
+from PyQt6.QtWidgets import QLineEdit
+from core import geometry_1
+
+class Bai1Panel(BaseGraphicPanel):
+    def __init__(self, mainframe):
+        super().__init__(mainframe, title_sidebar="THUẬT TOÁN ĐOẠN THẲNG")
+        
+        self.list_yeu_cau.addItems([
+            "1. Hình tam giác thường",
+            "2. Hình vuông",
+            "3. Hình chữ nhật",
+            "4. Hình bình hành",
+            "5. Hình thoi",
+            "6. Hình thang cân",
+            "7. Đa giác đều có N cạnh",
+            "8. Hình ngôi sao"
+        ])
+        
+        self.inputs = {}
+        self.list_yeu_cau.setCurrentRow(0)
+        self.list_yeu_cau.currentRowChanged.connect(self.xu_ly_thay_doi_nhan_input)
+        self.xu_ly_thay_doi_nhan_input(0)
+
+    def xu_ly_thay_doi_nhan_input(self, index):
+        self.xoa_toan_bo_input()
+        self.inputs.clear()
+
+        if index == 0:
+            self.them_o_nhap("canh_a", "Cạnh a (Đáy):", "200")
+            self.form_layout.addRow(self.tao_duong_ngan_cach())
+            self.them_o_nhap("canh_b", "Cạnh b (Trái):", "160")
+            self.form_layout.addRow(self.tao_duong_ngan_cach())
+            self.them_o_nhap("canh_c", "Cạnh c (Phải):", "160")
+
+        elif index == 1: # Hình vuông
+            self.them_o_nhap("canh", "Độ dài Cạnh:", "180")
+
+        elif index == 2: # Hình chữ nhật
+            self.them_o_nhap("rong", "Chiều rộng:", "200")
+            self.form_layout.addRow(self.tao_duong_ngan_cach())
+            self.them_o_nhap("cao", "Chiều cao:", "120")
+
+        elif index == 3: # Hình bình hành
+            self.them_o_nhap("day", "Chiều dài Đáy:", "200")
+            self.form_layout.addRow(self.tao_duong_ngan_cach())
+            self.them_o_nhap("cao", "Chiều cao:", "120")
+            self.form_layout.addRow(self.tao_duong_ngan_cach())
+            self.them_o_nhap("do_nghieng", "Độ nghiêng (H-offset):", "60")
+
+        elif index == 4: # Hình thoi
+            self.them_o_nhap("cheo_x", "Đường chéo X:", "200")
+            self.form_layout.addRow(self.tao_duong_ngan_cach())
+            self.them_o_nhap("cheo_y", "Đường chéo Y:", "140")
+
+        elif index == 5: # Hình thang cân
+            self.them_o_nhap("day_lon", "Đáy lớn:", "240")
+            self.form_layout.addRow(self.tao_duong_ngan_cach())
+            self.them_o_nhap("day_nho", "Đáy nhỏ:", "120")
+            self.form_layout.addRow(self.tao_duong_ngan_cach())
+            self.them_o_nhap("cao", "Chiều cao:", "100")
+
+        elif index == 6: # Đa giác đều
+            self.them_o_nhap("so_canh", "Số cạnh N:", "6")
+            self.form_layout.addRow(self.tao_duong_ngan_cach())
+            self.them_o_nhap("ban_kinh", "Bán kính R:", "120")
+
+        elif index == 7: # Hình ngôi sao
+            self.them_o_nhap("bk_ngoai", "Bán kính Ngoài:", "150")
+            self.form_layout.addRow(self.tao_duong_ngan_cach())
+            self.them_o_nhap("bk_trong", "Bán kính Trong:", "60")
+
+        self.cap_nhat_kich_thuoc_panel()
+
+    def them_o_nhap(self, key, label_text, default_value):
+        txt_input = QLineEdit(default_value)
+        self.form_layout.addRow(label_text, txt_input)
+        self.inputs[key] = txt_input
+
+    def xu_ly_logic_ve(self):
+        try:
+            self.canvas.dat_lai_khung_nhin()
+            
+            x_tam = round((self.canvas.width() // 2) / 100) * 100
+            y_tam = round((self.canvas.height() // 2) / 100) * 100
+            
+            index = self.list_yeu_cau.currentRow()
+            pixels = []
+
+            if index == 0:
+                pixels = geometry_1.get_triangle_pixels(
+                    x_tam, y_tam,
+                    int(self.inputs["canh_a"].text()),
+                    int(self.inputs["canh_b"].text()),
+                    int(self.inputs["canh_c"].text())
+                )
+            elif index == 1:
+                canh = int(self.inputs["canh"].text())
+                pixels = geometry_1.get_rectangle_pixels(x_tam, y_tam, canh, canh) # Tận dụng hình chữ nhật cho hình vuông
+                
+            elif index == 2:
+                pixels = geometry_1.get_rectangle_pixels(
+                    x_tam, y_tam,
+                    int(self.inputs["rong"].text()),
+                    int(self.inputs["cao"].text())
+                )
+            elif index == 3:
+                pixels = geometry_1.get_parallelogram_pixels(
+                    x_tam, y_tam,
+                    int(self.inputs["day"].text()),
+                    int(self.inputs["cao"].text()),
+                    int(self.inputs["do_nghieng"].text())
+                )
+            elif index == 4:
+                pixels = geometry_1.get_rhombus_pixels(
+                    x_tam, y_tam,
+                    int(self.inputs["cheo_x"].text()),
+                    int(self.inputs["cheo_y"].text())
+                )
+            elif index == 5:
+                pixels = geometry_1.get_isosceles_trapezoid_pixels(
+                    x_tam, y_tam,
+                    int(self.inputs["day_lon"].text()),
+                    int(self.inputs["day_nho"].text()),
+                    int(self.inputs["cao"].text())
+                )
+            elif index == 6:
+                pixels = geometry_1.get_regular_polygon_pixels(
+                    x_tam, y_tam,
+                    int(self.inputs["so_canh"].text()),
+                    int(self.inputs["ban_kinh"].text())
+                )
+            elif index == 7:
+                pixels = geometry_1.get_star_pixels(
+                    x_tam, y_tam,
+                    int(self.inputs["bk_ngoai"].text()),
+                    int(self.inputs["bk_trong"].text())
+                )
+
+            self.canvas.cap_nhat_hinh_ve(pixels)
+            
+        except (ValueError, KeyError, IndexError):
+            print("Lỗi định dạng dữ liệu đầu vào. Vui lòng kiểm tra lại!")
+==================================================
+FILE PATH: .\Computer_Graphic\exercises\Bai_2.py
+==================================================
+
+# exercises/Bai_2.py
+from components.BaseGraphicPanel import BaseGraphicPanel
+from PyQt6.QtWidgets import QLineEdit
+# ĐỔI ĐƯỜNG DẪN: Gọi trực tiếp tầng toán học độc lập của bài 2
+from core import geometry_2
+
+class Bai2Panel(BaseGraphicPanel):
+    def __init__(self, mainframe):
+        super().__init__(mainframe, title_sidebar="BÀI TẬP ĐƯỜNG TRÒN NÂNG CAO") #
+        
+        # Đưa 6 hình mẫu từ ảnh vào danh sách hiển thị
+        self.list_yeu_cau.addItems([
+            "1. Hệ đường tròn đồng tâm",
+            "2. Vòng bát chánh của Mahoraga",
+            "3. Hoa văn đan kết 24 đường tròn",
+            "4. Vòng tròn nan hoa đan xen",
+            "5. Hoa văn 8 đường tròn giao tâm",
+            "6. Vòng tròn lồng sao răng cưa"
+        ]) #
+        
+        self.inputs = {} #
+        self.list_yeu_cau.setCurrentRow(0) #
+        
+        self.list_yeu_cau.currentRowChanged.connect(self.xu_ly_thay_doi_nhan_input) #
+        self.xu_ly_thay_doi_nhan_input(0) #
+
+    def xu_ly_thay_doi_nhan_input(self, index): #
+        """Tự động dọn dẹp và hiển thị form nhập thông số chuẩn theo từng hình"""
+        self.xoa_toan_bo_input() #
+        self.inputs.clear() #
+
+        if index == 0:
+            self.them_o_nhap("basic_r", "Khoảng cách bán kính (R):", "35")
+            self.form_layout.addRow(self.tao_duong_ngan_cach()) #
+            self.them_o_nhap("so_vong", "Số vòng tròn đồng tâm:", "4")
+        elif index == 1:
+            self.them_o_nhap("r", "Độ dài nan trục (R):", "120")
+            self.form_layout.addRow(self.tao_duong_ngan_cach()) #
+            self.them_o_nhap("r_nho", "Bán kính bóng tròn (r):", "25")
+        elif index == 2:
+            self.them_o_nhap("r", "Bán kính cánh tròn (r):", "40")
+            self.form_layout.addRow(self.tao_duong_ngan_cach()) #
+            self.them_o_nhap("R_ngoai", "Bán kính vòng tâm (R):", "90")
+        elif index == 3:
+            self.them_o_nhap("r", "Bán kính vòng hoa (R):", "120")
+        elif index == 4:
+            self.them_o_nhap("R", "Bán kính vòng tròn kết (R):", "90")
+        elif index == 5:
+            self.them_o_nhap("r", "Bán kính vòng lõi (r):", "80")
+            self.form_layout.addRow(self.tao_duong_ngan_cach()) #
+            self.them_o_nhap("r_ngoai", "Bán kính đỉnh nhọn (R):", "120")
+
+        self.cap_nhat_kich_thuoc_panel() #
+
+    def them_o_nhap(self, key, label_text, default_value): #
+        txt_input = QLineEdit(default_value) #
+        self.form_layout.addRow(label_text, txt_input) #
+        self.inputs[key] = txt_input #
+
+    def xu_ly_logic_ve(self): #
+        try:
+            self.canvas.dat_lai_khung_nhin() #
+            
+            # Khóa tọa độ vẽ vào tâm màn hình lưới
+            x_tam = round((self.canvas.width() // 2) / 100) * 100 #
+            y_tam = round((self.canvas.height() // 2) / 100) * 100 #
+            
+            index = self.list_yeu_cau.currentRow() #
+            pixels = [] #
+
+            # Gọi trực tiếp qua biến `geometry_2` tương ứng với file hình học mới
+            if index == 0:
+                basic_r = int(self.inputs["basic_r"].text())
+                so_vong = int(self.inputs["so_vong"].text())
+                pixels = geometry_2.get_target_pixels(x_tam, y_tam, basic_r, so_vong)
+            elif index == 1:
+                r = int(self.inputs["r"].text())
+                r_nho = int(self.inputs["r_nho"].text())
+                pixels = geometry_2.get_flower_8_petals_pixels(x_tam, y_tam, r, r_nho)
+            elif index == 2:
+                r = int(self.inputs["r"].text())
+                R_ngoai = int(self.inputs["R_ngoai"].text())
+                pixels = geometry_2.get_flower_24_petals_pixels(x_tam, y_tam, r, R_ngoai)
+            elif index == 3:
+                r = int(self.inputs["r"].text())
+                pixels = geometry_2.get_wheel_with_spokes_pixels(x_tam, y_tam, r)
+            elif index == 4:
+                R = int(self.inputs["R"].text())
+                pixels = geometry_2.get_circular_pattern_8_petals_pixels(x_tam, y_tam, R)
+            elif index == 5:
+                r = int(self.inputs["r"].text())
+                r_ngoai = int(self.inputs["r_ngoai"].text())
+                pixels = geometry_2.get_star_with_inner_circle_pixels(x_tam, y_tam, r, r_ngoai)
+
+            # Đẩy mảng tọa độ sang cho Canvas hiển thị ra màn hình
+            self.canvas.cap_nhat_hinh_ve(pixels) #
+            
+        except (ValueError, KeyError, IndexError): #
+            print("Lỗi định dạng dữ liệu đầu vào. Vui lòng nhập số nguyên hợp lệ!") #
+==================================================
+FILE PATH: .\Computer_Graphic\exercises\Bai_3.py
+==================================================
+
+# exercises/Bai_3.py
+from typing import override
+
+from components.GraphFunctionPanel import GraphFunctionPanel
+from components.AnalysisOverlayPanel import AnalysisOverlayPanel
+from PyQt6.QtWidgets import QLineEdit, QMessageBox
+from core import geometry_3
+import math
+
+class Bai3Panel(GraphFunctionPanel):
+    def __init__(self, mainframe):
+        super().__init__(mainframe, title_sidebar="KHẢO SÁT & VẼ ĐỒ THỊ")
+        
+        self.list_yeu_cau.addItems([
+            "1. Hàm bậc nhất (y = ax + b)",
+            "2. Hàm bậc hai (y = ax² + bx + c)",
+            "3. Hàm bậc ba (y = ax³ + bx² + cx + d)",
+            "4. Hàm phân thức (y = (ax+b)/(cx+d))",
+            "5. Hàm phân thức (y = (ax²+bx+c)/(dx+e))"
+        ])
+        
+        self.inputs = {}
+        self.list_yeu_cau.setCurrentRow(0)
+        
+        # Khởi tạo Panel khảo sát lồng bên trong Canvas
+        self.panel_khao_sat_overlay = AnalysisOverlayPanel(self.canvas)
+        
+        self.list_yeu_cau.currentRowChanged.connect(self.xu_ly_thay_doi_nhan_input)
+        self.xu_ly_thay_doi_nhan_input(0)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if hasattr(self, 'panel_khao_sat_overlay'):
+            # Cập nhật vị trí căn giữa chuẩn xác theo cả chiều ngang và dọc
+            self.panel_khao_sat_overlay.parent_resize_event(self.canvas.width(), self.canvas.height())  
+
+    def xu_ly_thay_doi_nhan_input(self, index):
+        # Tự động xóa sạch hình vẽ cũ và reset khung nhìn canvas khi người dùng chuyển hàm số
+        self.canvas.cap_nhat_hinh_ve([])
+        self.canvas.dat_lai_khung_nhin()
+        
+        self.xoa_toan_bo_input()
+        self.inputs.clear()
+        if hasattr(self, 'panel_khao_sat_overlay'):
+            self.panel_khao_sat_overlay.hide()
+
+        self.them_o_nhap("scale", "Độ thu phóng lưới (Scale):", "40")
+        self.form_layout.addRow(self.tao_duong_ngan_cach()) #
+
+        if index == 0:
+            self.them_o_nhap("a", "Hệ số a:", "1")
+            self.them_o_nhap("b", "Hệ số b:", "2")
+        elif index == 1:
+            self.them_o_nhap("a", "Hệ số a:", "1")
+            self.them_o_nhap("b", "Hệ số b:", "-2")
+            self.them_o_nhap("c", "Hệ số c:", "-1")
+        elif index == 2:
+            self.them_o_nhap("a", "Hệ số a:", "1")
+            self.them_o_nhap("b", "Hệ số b:", "0")
+            self.them_o_nhap("c", "Hệ số c:", "-3")
+            self.them_o_nhap("d", "Hệ số d:", "1")
+        elif index == 3:
+            self.them_o_nhap("a", "Hệ số a (tử):", "2")
+            self.them_o_nhap("b", "Hệ số b (tử):", "1")
+            self.form_layout.addRow(self.tao_duong_ngan_cach()) #
+            self.them_o_nhap("c", "Hệ số c (mẫu):", "1")
+            self.them_o_nhap("d", "Hệ số d (mẫu):", "-1")
+        elif index == 4:
+            self.them_o_nhap("a", "Hệ số a (tử):", "1")
+            self.them_o_nhap("b", "Hệ số b (tử):", "1")
+            self.them_o_nhap("c", "Hệ số c (tử):", "-2")
+            self.form_layout.addRow(self.tao_duong_ngan_cach()) #
+            self.them_o_nhap("d", "Hệ số d (mẫu):", "1")
+            self.them_o_nhap("e", "Hệ số e (mẫu):", "1")
+
+        self.cap_nhat_kich_thuoc_panel() #
+
+    def them_o_nhap(self, key, label_text, default_value): #
+        txt_input = QLineEdit(default_value) #
+        self.form_layout.addRow(label_text, txt_input) #
+        self.inputs[key] = txt_input #
+
+    @override
+    def xu_ly_logic_ve(self):
+        """ NƠI TIẾP NHẬN DỮ LIỆU UI -> CHUYỂN TOÁN HỌC -> ĐẨY RA CANVAS VẼ """
+        try:
+            self.canvas.dat_lai_khung_nhin()
+            
+            w_nua = self.canvas.width() / 2
+            h_nua = self.canvas.height() / 2
+            
+            from PyQt6.QtCore import QPointF
+            self.canvas.goc_toa_do_pan = QPointF(w_nua, h_nua)
+            self.canvas.update() # Cập nhật lại giao diện lưới
+            
+            x_tam = 0
+            y_tam = 0
+            
+            index = self.list_yeu_cau.currentRow()
+            scale = float(self.inputs["scale"].text())
+            pixels = []
+
+            if index == 0:
+                a = float(self.inputs["a"].text())
+                b = float(self.inputs["b"].text())
+                pixels = geometry_3.get_line_function_pixels(x_tam, y_tam, a, b, scale=scale) # type: ignore
+            elif index == 1:
+                a = float(self.inputs["a"].text())
+                b = float(self.inputs["b"].text())
+                c = float(self.inputs["c"].text())
+                pixels = geometry_3.get_quadratic_function_pixels(x_tam, y_tam, a, b, c, scale=scale) # type: ignore
+            elif index == 2:
+                a = float(self.inputs["a"].text())
+                b = float(self.inputs["b"].text())
+                c = float(self.inputs["c"].text())
+                d = float(self.inputs["d"].text())
+                pixels = geometry_3.get_cubic_function_pixels(x_tam, y_tam, a, b, c, d, scale=scale) # type: ignore
+            elif index == 3:
+                a = float(self.inputs["a"].text())
+                b = float(self.inputs["b"].text())
+                c = float(self.inputs["c"].text())
+                d = float(self.inputs["d"].text())
+                pixels = geometry_3.get_rational_1_1_pixels(x_tam, y_tam, a, b, c, d, scale=scale) # type: ignore
+            elif index == 4:
+                a = float(self.inputs["a"].text())
+                b = float(self.inputs["b"].text())
+                c = float(self.inputs["c"].text())
+                d = float(self.inputs["d"].text())
+                e = float(self.inputs["e"].text())
+                pixels = geometry_3.get_rational_2_1_pixels(x_tam, y_tam, a, b, c, d, e, scale=scale) # type: ignore
+
+            self.canvas.cap_nhat_hinh_ve(pixels)
+
+        except ValueError:
+            QMessageBox.warning(self, "Lỗi nhập liệu", "Vui lòng chỉ nhập các giá trị số hợp lệ!")
+
+    @override
+    def xu_ly_logic_khao_sat(self):
+        """Xử lý phân tích khảo sát toán học chuyên sâu với Giao diện Bảng Biến Thiên SGK nâng cao"""
+        index = self.list_yeu_cau.currentRow()
+        try:
+            html_content = ""
+            
+            style_table = """
+            <style>
+                table.bbt { 
+                    border-collapse: collapse; 
+                    width: 100%; 
+                    margin: 15px 0; 
+                    border: 2px solid #334155; 
+                    background-color: #111423;
+                }
+                table.bbt td { 
+                    border: 1px solid #334155; 
+                    padding: 6px; 
+                    text-align: center; 
+                    font-family: 'Segoe UI', sans-serif;
+                    font-size: 11pt;
+                    color: #e2e8f0;
+                }
+                table.bbt td.label { 
+                    background-color: #161925; 
+                    color: #00f0ff; 
+                    font-weight: bold; 
+                    width: 12%; 
+                }
+                .neon-green { color: #10b981; font-weight: bold; }
+                .neon-pink { color: #ff0055; font-weight: bold; }
+                .neon-blue { color: #00f0ff; font-weight: bold; }
+                .arrow-up { color: #ff0055; font-weight: bold; font-size: 13pt; }   /* Mũi tên đồng biến */
+                .arrow-down { color: #00f0ff; font-weight: bold; font-size: 13pt; } /* Mũi tên nghịch biến */
+            </style>
+            """
+
+            # =================================================================
+            # 1. HÀM BẬC NHẤT: y = ax + b
+            # =================================================================
+            if index == 0:
+                a = float(self.inputs["a"].text())
+                b = float(self.inputs["b"].text())
+                chieu = "ĐỒNG BIẾN trên ℝ" if a > 0 else ("NGHỊCH BIẾN trên ℝ" if a < 0 else "HÀM HẰNG")
+                
+                # Cấu hình chiều mũi tên theo dấu hệ số a
+                dong_y_phay = f"<td colspan='2'>{'+' if a > 0 else '-'}</td>"
+                dong_y = f"<td>-∞</td><td class='arrow-up'>↗</td><td>+∞</td>" if a > 0 else f"<td>+∞</td><td class='arrow-down'>↘</td><td>-∞</td>"
+                
+                html_content = style_table + fr"""
+                <p><b class='neon-blue'>Hàm số:</b> y = {a}x + {b}</p>
+                <p><b>1. Tập xác định:</b> D = ℝ</p>
+                <p><b>2. Sự biến thiên:</b></p>
+                <ul>
+                    <li><b>Đạo hàm:</b> y' = {a}</li>
+                    <li><b>Chiều biến thiên:</b> Hàm số <span class='neon-green'>{chieu}</span> trên toàn bộ tập xác định.</li>
+                    <li><b>Cực trị:</b> Hàm số không có cực trị.</li>
+                </ul>
+                <p><b>3. Bảng biến thiên chuẩn hóa:</b></p>
+                <table class='bbt'>
+                    <tr><td class='label'>x</td><td width='44%'>-∞</td><td width='44%'>+∞</td></tr>
+                    <tr><td class='label'>y'</td>{dong_y_phay}</tr>
+                    <tr><td class='label'>y</td>{dong_y}</tr>
+                </table>
+                """
+
+            # =================================================================
+            # 2. HÀM BẬC HAI: y = ax² + bx + c
+            # =================================================================
+            elif index == 1:
+                a = float(self.inputs["a"].text())
+                b = float(self.inputs["b"].text())
+                c = float(self.inputs["c"].text())
+                if a == 0:
+                    raise ValueError
+                
+                x_dinh = -b / (2 * a)
+                y_dinh = a * (x_dinh**2) + b * x_dinh + c
+                
+                # Giả lập bảng biến thiên Parabol SGK bằng cấu hình ô nhiều tầng
+                if a > 0: # Bề lõm quay lên trên -> Nghịch biến rồi đồng biến
+                    bbt_y = f"""
+                    <td>+∞</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td>+∞</td>
+                    </tr>
+                    <tr><td class='label' style='border:none;background:transparent;'></td>
+                    <td></td>
+                    <td class='arrow-down'>↘</td>
+                    <td class='arrow-up'>↗</td>
+                    <td></td>
+                    </tr>
+                    <tr><td class='label' style='border:none;background:transparent;'></td>
+                    <td></td>
+                    <td></td>
+                    <td class='neon-pink'>{y_dinh:.2f}</td>
+                    <td></td>
+                    """
+                    dong_y_phay = "<td>-</td><td>0</td><td>+</td>"
+                    bien_thien = f"Nghịch biến trên khoảng (-∞; {x_dinh:.2f}) và đồng biến trên khoảng ({x_dinh:.2f}; +∞)"
+                    cuc_tri = f"Hàm số đạt <b class='neon-green'>Cực tiểu</b> tại điểm: <span class='neon-blue'>I({x_dinh:.2f}; {y_dinh:.2f})</span>"
+                else: # Bề lõm quay xuống -> Đồng biến rồi nghịch biến
+                    bbt_y = f"""
+                    <td></td>
+                    <td></td>
+                    <td class='neon-pink'>{y_dinh:.2f}</td>
+                    <td></td>
+                    <td></td>
+                    </tr>
+                    <tr><td class='label' style='border:none;background:transparent;'></td>
+                    <td></td>
+                    <td class='arrow-up'>↗</td>
+                    <td class='arrow-down'>↘</td>
+                    <td></td>
+                    </tr>
+                    <tr><td class='label' style='border:none;background:transparent;'></td>
+                    <td>-∞</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td>-∞</td>
+                    """
+                    dong_y_phay = "<td>+</td><td>0</td><td>-</td>"
+                    bien_thien = f"Đồng biến trên khoảng (-∞; {x_dinh:.2f}) và nghịch biến trên khoảng ({x_dinh:.2f}; +∞)"
+                    cuc_tri = f"Hàm số đạt <b class='neon-pink'>Cực đại</b> tại điểm: <span class='neon-blue'>I({x_dinh:.2f}; {y_dinh:.2f})</span>"
+
+                html_content = style_table + fr"""
+                <p><b class='neon-blue'>Hàm số:</b> y = {a}x² + {b}x + {c}</p>
+                <p><b>1. Tập xác định:</b> D = ℝ</p>
+                <p><b>2. Sự biến thiên:</b></p>
+                <ul>
+                    <li><b>Đạo hàm:</b> y' = {2*a}x + {b} ⇒ y' = 0 tại x = {x_dinh:.2f}</li>
+                    <li><b>Sự biến thiên:</b> {bien_thien}</li>
+                    <li><b>Cực trị:</b> {cuc_tri}</li>
+                </ul>
+                <p><b>3. Bảng biến thiên chuẩn hóa:</b></p>
+                <table class='bbt'>
+                    <tr><td class='label'>x</td><td>-∞</td><td colspan='2'>{x_dinh:.2f}</td><td>+∞</td></tr>
+                    <tr><td class='label'>y'</td>{dong_y_phay}</tr>
+                    <tr><td class='label'>y</td>{bbt_y}</tr>
+                </table>
+                """
+
+            # =================================================================
+            # 3. HÀM BẬC BA: y = ax³ + bx² + cx + d
+            # =================================================================
+            elif index == 2:
+                a = float(self.inputs["a"].text())
+                b = float(self.inputs["b"].text())
+                c = float(self.inputs["c"].text())
+                d = float(self.inputs["d"].text())
+                if a == 0:
+                    raise ValueError
+
+                A = 3 * a
+                B = 2 * b
+                C = c
+                delta = B**2 - 4 * A * C
+                
+                html_content = style_table + fr"""
+                <p><b class='neon-blue'>Hàm số:</b> y = {a}x³ + {b}x² + {c}x + {d}</p>
+                <p><b>1. Tập xác định:</b> D = ℝ</p>
+                <p><b>2. Sự biến thiên:</b> Đạo hàm y' = {A}x² + {B}x + {C} (Δ' = {delta:.2f})</p>
+                """
+                
+                if delta <= 0: # Không có cực trị
+                    tt_chieu = "ĐỒNG BIẾN trên ℝ" if a > 0 else "NGHỊCH BIẾN trên ℝ"
+                    dong_y = f"<td>-∞</td><td class='arrow-up'>↗</td><td>+∞</td>" if a > 0 else f"<td>+∞</td><td class='arrow-down'>↘</td><td>-∞</td>"
+                    html_content += fr"""
+                    <ul>
+                        <li><b>Chiều biến thiên:</b> Do y' không đổi dấu, hàm số <span class='neon-green'>{tt_chieu}</span>.</li>
+                        <li><b>Cực trị:</b> Hàm số không có điểm cực trị nào.</li>
+                    </ul>
+                    <p><b>3. Bảng biến thiên chuẩn hóa:</b></p>
+                    <table class='bbt'>
+                        <tr><td class='label'>x</td><td width='44%'>-∞</td><td width='44%'>+∞</td></tr>
+                        <tr><td class='label'>y'</td><td colspan='2'>{"++" if a>0 else "--"}</td></tr>
+                        <tr><td class='label'>y</td>{dong_y}</tr>
+                    </table>
+                    """
+                else: # Có 2 cực trị phân biệt
+                    x1 = (-B - math.sqrt(delta)) / (2 * A)
+                    x2 = (-B + math.sqrt(delta)) / (2 * A)
+                    if x1 > x2:
+                        x1, x2 = x2, x1
+                    
+                    y1 = a*(x1**3) + b*(x1**2) + c*x1 + d
+                    y2 = a*(x2**3) + b*(x2**2) + c*x2 + d
+                    
+                    if a > 0:
+                        bbt_y = f"<td>-∞</td><td class='arrow-up'>↗</td><td class='neon-pink'>{y1:.2f}</td><td class='arrow-down'>↘</td><td class='neon-pink'>{y2:.2f}</td><td class='arrow-up'>↗</td><td>+∞</td>"
+                        dong_y_phay = "<td>+</td><td>0</td><td>-</td><td>0</td><td>+</td>"
+                    else:
+                        bbt_y = f"<td>+∞</td><td class='arrow-down'>↘</td><td class='neon-pink'>{y1:.2f}</td><td class='arrow-up'>↗</td><td class='neon-pink'>{y2:.2f}</td><td class='arrow-down'>↘</td><td>-∞</td>"
+                        dong_y_phay = "<td>-</td><td>0</td><td>+</td><td>0</td><td>-</td>"
+
+                    html_content += fr"""
+                    <ul>
+                        <li><b>Cực trị:</b> Đạo hàm có 2 nghiệm phân biệt.</li>
+                        <li>Điểm cực trị thứ nhất: <span class='neon-blue'>({x1:.2f}; {y1:.2f})</span></li>
+                        <li>Điểm cực trị thứ hai: <span class='neon-blue'>({x2:.2f}; {y2:.2f})</span></li>
+                    </ul>
+                    <p><b>3. Bảng biến thiên chuẩn hóa:</b></p>
+                    <table class='bbt'>
+                        <tr><td class='label'>x</td><td>-∞</td><td>{x1:.2f}</td><td colspan='2'>{x2:.2f}</td><td>+∞</td></tr>
+                        <tr><td class='label'>y'</td>{dong_y_phay}</tr>
+                        <tr><td class='label'>y</td>{bbt_y}</tr>
+                    </table>
+                    """
+
+            # =================================================================
+            # 4. HÀM PHÂN THỨC: y = (ax + b) / (cx + d)
+            # =================================================================
+            elif index == 3:
+                a = float(self.inputs["a"].text())
+                b = float(self.inputs["b"].text())
+                c = float(self.inputs["c"].text())
+                d = float(self.inputs["d"].text())
+                if c == 0:
+                    raise ValueError
+                
+                tc_dung = -d / c
+                tc_ngang = a / c
+                ladinh = a * d - b * c 
+                
+                chieu = "ĐỒNG BIẾN" if ladinh > 0 else "NGHỊCH BIẾN"
+                dau = "+" if ladinh > 0 else "-"
+                
+                if ladinh > 0:
+                    bbt_y = f"<td>{tc_ngang:.2f}</td><td class='arrow-up'>↗</td><td style='color:#ff0055; font-weight:bold;'>+∞</td><td style='color:#ff0055;'>||</td><td style='color:#ff0055; font-weight:bold;'>-∞</td><td class='arrow-up'>↗</td><td>{tc_ngang:.2f}</td>"
+                else:
+                    bbt_y = f"<td>{tc_ngang:.2f}</td><td class='arrow-down'>↘</td><td style='color:#ff0055; font-weight:bold;'>-∞</td><td style='color:#ff0055;'>||</td><td style='color:#ff0055; font-weight:bold;'>+∞</td><td class='arrow-down'>↘</td><td>{tc_ngang:.2f}</td>"
+
+                html_content = style_table + fr"""
+                <p><b class='neon-blue'>Hàm số:</b> y = ({a}x + {b}) / ({c}x + {d})</p>
+                <p><b>1. Tập xác định:</b> D = ℝ \ {{{tc_dung:.2f}}}</p>
+                <p><b>2. Sự biến thiên & Tiệm cận:</b></p>
+                <ul>
+                    <li><b>Đạo hàm:</b> y' = {ladinh} / ({c}x + {d})²</li>
+                    <li><b>Tính đơn điệu:</b> Hàm số <span class='neon-green'>{chieu}</span> trên từng khoảng xác định (-∞; {tc_dung:.2f}) và ({tc_dung:.2f}; +∞).</li>
+                    <li><b>Cực trị:</b> Hàm số không có cực trị.</li>
+                    <li><b>Hệ tiệm cận:</b> Tiệm cận đứng: <span class='neon-pink'>x = {tc_dung:.2f}</span> | Tiệm cận ngang: <span class='neon-pink'>y = {tc_ngang:.2f}</span></li>
+                </ul>
+                <p><b>3. Bảng biến thiên dạng song song phân nhánh (SGK):</b></p>
+                <table class='bbt'>
+                    <tr><td class='label'>x</td><td>-∞</td><td colspan='2' style='color:#ff0055; font-weight:bold;'>{tc_dung:.2f}</td><td>+∞</td></tr>
+                    <tr><td class='label'>y'</td><td>{dau}</td><td colspan='2' style='color:#ff0055; font-weight:bold;'>||</td><td>{dau}</td></tr>
+                    <tr><td class='label'>y</td>{bbt_y}</tr>
+                </table>
+                """
+
+            # =================================================================
+            # 5. HÀM PHÂN THỨC: y = (ax² + bx + c) / (dx + e)
+            # =================================================================
+            elif index == 4:
+                a = float(self.inputs["a"].text())
+                b = float(self.inputs["b"].text())
+                c = float(self.inputs["c"].text())
+                d = float(self.inputs["d"].text())
+                e = float(self.inputs["e"].text())
+                if d == 0:
+                    raise ValueError
+                
+                tc_dung = -e / d
+                html_content = style_table + fr"""
+                <p><b class='neon-blue'>Hàm số:</b> y = ({a}x² + {b}x + {c}) / ({d}x + {e})</p>
+                <p><b>1. Tập xác định:</b> D = ℝ \ {{{tc_dung:.2f}}}</p>
+                <p><b>2. Khảo sát biến thiên chuyên sâu:</b></p>
+                <ul>
+                    <li><b>Tiệm cận đứng:</b> Đường thẳng <span class='neon-pink'>x = {tc_dung:.2f}</span></li>
+                    <li><b>Tiệm cận xiên:</b> Chia tử cho mẫu ta thu được tiệm cận xiên khi x tiến ra vô cùng.</li>
+                    <li><b>Cực trị:</b> Cực đại và Cực tiểu xuất hiện đối xứng hai bên đường tiệm cận đứng.</li>
+                </ul>
+                <p><b>3. Bảng biến thiên mô phỏng tiệm cận:</b></p>
+                <table class='bbt'>
+                    <tr><td class='label'>x</td><td>-∞</td><td>X_CĐ</td><td style='color:#ff0055; font-weight:bold;'>{tc_dung:.2f}</td><td>X_CT</td><td>+∞</td></tr>
+                    <tr><td class='label'>y'</td><td>+</td><td>0</td><td>-</td><td style='color:#ff0055; font-weight:bold;'>||</td><td>-</td><td>0</td><td>+</td></tr>
+                    <tr><td class='label'>y</td><td>-∞ ↗</td><td class='neon-pink'>Cực Đại</td><td>↘ -∞</td><td style='color:#ff0055; font-weight:bold;'>||</td><td>+∞ ↘</td><td class='neon-green'>Cực Tiểu</td><td>↗ +∞</td></tr>
+                </table>
+                """
+
+            self.panel_khao_sat_overlay.cap_nhat_du_lieu_html(html_content)
+            self.panel_khao_sat_overlay.parent_resize_event(self.canvas.width(), self.canvas.height())
+            
+        except (ValueError, ZeroDivisionError):
+            QMessageBox.warning(self, "Lỗi dữ liệu", "Hệ số nhập vào không hợp lệ hoặc làm mất bậc cao nhất của hàm số!")
+==================================================
+FILE PATH: .\Computer_Graphic\exercises\ExerciseListPanel.py
+==================================================
+
+# exercises/ExerciseListPanel.py
+import os
+import sys
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, 
+                             QLabel, QPushButton, QScrollArea, QGraphicsDropShadowEffect, QSpacerItem, QSizePolicy)
+from PyQt6.QtGui import QColor
+from PyQt6.QtCore import Qt
+
+class ExerciseListPanel(QWidget):
+    def __init__(self, mainframe):
+        super().__init__()
+        self.mainframe = mainframe
+        self.setObjectName("ExerciseListPanel")
+        
+        # Thiết lập nền tổng thể (Hỗ trợ nạp StyledBackground cho QWidget)
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        
+        # 1. KHỞI TẠO LAYOUT CHÍNH (QVBoxLayout)
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(10, 100, 10, 10)  # Giữ nguyên topMargin 100 từ file .ui
+        self.main_layout.setSpacing(30)
+
+        # 2. KHỞI TẠO THÀNH PHẦN HEADER
+        self.lbl_header = QLabel()
+        self.lbl_header.setObjectName("lbl_header")
+        # Sử dụng chuỗi HTML kết hợp text-shadow neon nguyên bản của bạn
+        self.lbl_header.setText(
+            '<p align="center"><span style="font-family:\'Montserrat\', \'Segoe UI\'; '
+            'font-size:42pt; font-weight:bold; color:#ffffff; '
+            'text-shadow: 0 0 5px #fff, 0 0 10px #ff0055, 0 0 20px #ff0055, 0 0 40px #ff0055;">'
+            'DANH SÁCH BÀI TẬP</span></p>'
+        )
+        self.lbl_header.setMargin(10)
+        
+        # Hiệu ứng đổ bóng lớp phụ (Neon DropShadow) cho tiêu đề
+        hieu_ung_neon = QGraphicsDropShadowEffect(self)
+        hieu_ung_neon.setBlurRadius(25)
+        hieu_ung_neon.setColor(QColor("#ff0055"))
+        hieu_ung_neon.setOffset(0, 0)
+        self.lbl_header.setGraphicsEffect(hieu_ung_neon)
+        
+        # Đưa Header vào layout chính, căn giữa theo chiều ngang
+        self.main_layout.addWidget(self.lbl_header, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        # 3. KHỞI TẠO VÙNG CUỘN (QScrollArea)
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setObjectName("scrollArea")
+        self.scroll_area.setWidgetResizable(True)
+        
+        # Widget nội dung bên trong vùng cuộn
+        self.scroll_widget = QWidget()
+        self.scroll_widget.setObjectName("scrollAreaWidgetContents")
+        
+        # Grid Layout quản lý các nút bấm bài tập
+        self.grid_layout = QGridLayout(self.scroll_widget)
+        self.grid_layout.setContentsMargins(40, 0, 40, 0) # leftMargin và rightMargin là 40
+        
+        # Tạo Spacer 2 bên để ép các nút bấm gom vào cột giữa cân đối
+        self.spacer_trai = QSpacerItem(80, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        self.spacer_phai = QSpacerItem(80, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        self.grid_layout.addItem(self.spacer_trai, 3, 0)
+        self.grid_layout.addItem(self.spacer_phai, 3, 2)
+
+        # Khởi tạo các nút bấm bài tập
+        self.btn_bai1 = QPushButton("Bài 1 : Vẽ đoạn thẳng")
+        self.btn_bai1.setObjectName("btn_bai1")
+        self.btn_bai1.clicked.connect(lambda: self.xu_ly_vao_bai("Bai_1"))
+        self.grid_layout.addWidget(self.btn_bai1, 3, 1) # Hàng 3, Cột 1
+        
+        self.btn_bai2 = QPushButton("Bài 2 : Vẽ hình tròn")
+        self.btn_bai2.setObjectName("btn_bai2")
+        self.btn_bai2.clicked.connect(lambda: self.xu_ly_vao_bai("Bai_2"))
+        self.grid_layout.addWidget(self.btn_bai2, 4, 1) # Hàng 4, Cột 1
+
+        self.btn_bai_3 = QPushButton("BÀI 3: KHẢO SÁT & VẼ ĐỒ THỊ HÀM SỐ")
+        self.btn_bai_3.clicked.connect(lambda: self.mainframe.showScreen("Bai_3"))
+        self.grid_layout.addWidget(self.btn_bai_3, 5, 1) # Hàng 5, Cột 1    
+
+        self.scroll_area.setWidget(self.scroll_widget)
+        self.main_layout.addWidget(self.scroll_area)
+
+        # 4. KHỞI TẠO THÀNH PHẦN AUTHOR Ở GÓC DƯỚI
+        self.lbl_author = QLabel("Developed by Kousujo")
+        self.lbl_author.setObjectName("lbl_author")
+        
+        # Tạo một Layout ngang phụ để đẩy chữ Author về góc phải đáy
+        self.layout_day = QHBoxLayout()
+        self.layout_day.addStretch()
+        self.layout_day.addWidget(self.lbl_author)
+        self.main_layout.addLayout(self.layout_day)
+
+        # 5. THIẾT LẬP STYLESHEET CHUẨN HOÀN TOÀN
+        self.thiet_lap_stylesheets()
+
+    def thiet_lap_stylesheets(self):
+        # -----------------------------------------------------------------
+        # XỬ LÝ ĐƯỜNG DẪN ẢNH NỀN TƯƠNG THÍCH CHO CẢ .PY VÀ .EXE
+        # -----------------------------------------------------------------
+        if hasattr(sys, '_MEIPASS'):
+            # Khi chạy từ file .exe độc lập, PyInstaller giải nén tài nguyên vào thư mục tạm này
+            goc_du_lieu = sys._MEIPASS # type: ignore
+        else:
+            # Khi chạy dev bằng file .py thông thường, quay ngược lên thư mục gốc dự án
+            thu_muc_hien_tai = os.path.dirname(os.path.abspath(__file__))
+            goc_du_lieu = os.path.dirname(thu_muc_hien_tai)
+
+        # Nối chuỗi chính xác đến file ảnh nằm trong folder 'asset' và sửa dấu gạch chéo cho CSS
+        duong_dan_anh_nen = os.path.join(goc_du_lieu, "asset", "neon2.jpg").replace("\\", "/")
+
+        self.setStyleSheet(f"""
+            /* Hình nền tổng thể sử dụng đường dẫn động */
+            #ExerciseListPanel {{
+                background-image: url("{duong_dan_anh_nen}");
+                background-position: center;
+                background-repeat: no-repeat;
+            }}
+
+            /* Vùng cuộn trong suốt */
+            QScrollArea {{
+                background-color: transparent;
+                border: none;
+            }}
+            #scrollAreaWidgetContents {{
+                background-color: transparent;
+            }}
+
+            /* Thanh cuộn mượt mà phong cách Cyberpunk */
+            QScrollBar:vertical {{
+                background: #0f111a;
+                width: 8px;
+                border-radius: 4px;
+            }}
+            QScrollBar::handle:vertical {{
+                background: #ff0055;
+                border-radius: 4px;
+            }}
+            QScrollBar::handle:vertical:hover {{
+                background: #00f0ff;
+            }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+                border: none; background: none;
+            }}
+
+            /* Phong cách nút bấm Neon mượt mà */
+            QPushButton {{
+                background-color: #161925;
+                color: #00f0ff; 
+                font-family: 'Segoe UI', sans-serif;
+                font-size: 15pt;
+                font-weight: bold;
+                border: 2px solid #00f0ff;
+                border-radius: 10px;
+                padding: 15px;
+                margin-bottom: 12px; 
+            }}
+            QPushButton:hover {{
+                color: #ffffff;
+                background-color: #ff0055; 
+                border: 2px solid #ffffff; 
+            }}
+            QPushButton:pressed {{
+                background-color: #9d00ff;
+                border: 2px solid #9d00ff;
+            }}
+
+            /* Chữ Author tinh tế ở góc đáy */
+            #lbl_author {{
+                font-family: 'Segoe UI', sans-serif;
+                font-size: 15pt;
+                font-weight: bold;
+                color: #626880;
+                letter-spacing: 1px;
+            }}
+            #lbl_author:hover {{
+                color: #00f0ff;
+            }}
+        """)
+
+    def xu_ly_vao_bai(self, ten_man_hinh):
+        self.mainframe.showScreen(ten_man_hinh)
+==================================================
+FILE PATH: .\Computer_Graphic\exercises\__init__.py
+==================================================
