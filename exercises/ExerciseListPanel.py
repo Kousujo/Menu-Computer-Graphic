@@ -61,20 +61,16 @@ class ExerciseListPanel(QWidget):
         self.grid_layout.addItem(self.spacer_trai, 3, 0)
         self.grid_layout.addItem(self.spacer_phai, 3, 2)
 
-        # Khởi tạo các nút bấm bài tập
-        self.btn_bai1 = QPushButton("Bài 1 : Vẽ đoạn thẳng")
-        self.btn_bai1.setObjectName("btn_bai1")
-        self.btn_bai1.clicked.connect(lambda: self.xu_ly_vao_bai("Bai_1"))
-        self.grid_layout.addWidget(self.btn_bai1, 3, 1) # Hàng 3, Cột 1
-        
-        self.btn_bai2 = QPushButton("Bài 2 : Vẽ hình tròn")
-        self.btn_bai2.setObjectName("btn_bai2")
-        self.btn_bai2.clicked.connect(lambda: self.xu_ly_vao_bai("Bai_2"))
-        self.grid_layout.addWidget(self.btn_bai2, 4, 1) # Hàng 4, Cột 1
+        # Khởi tạo các nút chương mới
+        self.btn_chuong1 = QPushButton("CHƯƠNG 1: CÁC YẾU TỐ CƠ SỞ CỦA ĐỒ HỌA")
+        self.btn_chuong1.setObjectName("btn_chuong1")
+        self.btn_chuong1.clicked.connect(lambda: self.xu_ly_vao_bai("Chuong_1"))
+        self.grid_layout.addWidget(self.btn_chuong1, 3, 1) # Hàng 3, Cột 1
 
-        self.btn_bai_3 = QPushButton("BÀI 3: KHẢO SÁT & VẼ ĐỒ THỊ HÀM SỐ")
-        self.btn_bai_3.clicked.connect(lambda: self.mainframe.showScreen("Bai_3"))
-        self.grid_layout.addWidget(self.btn_bai_3, 5, 1) # Hàng 5, Cột 1    
+        self.btn_chuong2 = QPushButton("CHƯƠNG 2: TÔ MÀU")
+        self.btn_chuong2.setObjectName("btn_chuong2")
+        self.btn_chuong2.clicked.connect(lambda: self.xu_ly_vao_bai("Chuong_2"))
+        self.grid_layout.addWidget(self.btn_chuong2, 4, 1) # Hàng 4, Cột 1    
 
         self.scroll_area.setWidget(self.scroll_widget)
         self.main_layout.addWidget(self.scroll_area)

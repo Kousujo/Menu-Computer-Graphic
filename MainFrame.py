@@ -33,17 +33,14 @@ class MainFrame(QMainWindow):
 
     def khoi_tao_cac_bai_thuc_hanh(self):
         """
-        Nơi duy nhất bạn khai báo bài tập mới. 
-        Khi làm xong Bài 2, bạn chỉ cần mở khóa (uncomment) dòng Bài 2 mà không động vào luồng hệ thống.
+        Nơi duy nhất bạn khai báo bài tập mới.
+        Khởi tạo các chương học: Chương 1 và Chương 2
         """
-        from exercises.Bai_1 import Bai1Panel
-        self.addScreen(Bai1Panel(self), "Bai_1")
-        
-        from exercises.Bai_2 import Bai2Panel
-        self.addScreen(Bai2Panel(self), "Bai_2")
+        from exercises.Chuong_1 import Chuong1Panel
+        self.addScreen(Chuong1Panel(self), "Chuong_1")
 
-        from exercises.Bai_3 import Bai3Panel
-        self.addScreen(Bai3Panel(self), "Bai_3")
+        from exercises.Chuong_2 import Chuong2Panel
+        self.addScreen(Chuong2Panel(self), "Chuong_2")
 
     def addScreen(self, widget, name):
         self.card_layout_manager.addWidget(widget)

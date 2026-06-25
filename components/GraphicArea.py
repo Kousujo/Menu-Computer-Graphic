@@ -1,4 +1,4 @@
-# GraphicArea.py
+# components/GraphicArea.py
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import Qt, QPointF, QPoint
 from PyQt6.QtGui import QPainter, QColor, QPen, QTransform
@@ -59,14 +59,22 @@ class GraphicArea(QWidget):
         painter.drawLine(-gioi_han_ao, 0, gioi_han_ao, 0)
 
         # =================================================================
-        # VẼ HÌNH CHÍNH (Nét dày pixel nguyên bản)
+        # VẼ HÌNH CHÍNH (Xử lý tương thích cả 2 định dạng)
         # =================================================================
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
-        painter.setPen(QPen(QColor("#1e293b"), 3)) 
+        but_mac_dinh = QPen(QColor("#1e293b"), 3)
+        painter.setPen(but_mac_dinh)
         
         if self.danh_sach_pixel:
-            points = [QPoint(int(x), int(y)) for x, y in self.danh_sach_pixel]
-            painter.drawPoints(points) # type: ignore
+            for p in self.danh_sach_pixel:
+                if len(p) == 3: # Định dạng chương 2: (x, y, (r, g, b))
+                    x, y, color = p
+                    painter.setPen(QPen(QColor(color[0], color[1], color[2]), 3))
+                    painter.drawPoint(int(x), int(y))
+                elif len(p) == 2: # Định dạng chương 1: (x, y)
+                    x, y = p
+                    painter.setPen(but_mac_dinh)
+                    painter.drawPoint(int(x), int(y))
 
     def wheelEvent(self, event):
         if event.angleDelta().y() > 0:

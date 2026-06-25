@@ -1,6 +1,4 @@
 # components/GraphFunctionPanel.py
-from typing import override
-
 from components.BaseGraphicPanel import BaseGraphicPanel
 from PyQt6.QtWidgets import QPushButton, QHBoxLayout
 
