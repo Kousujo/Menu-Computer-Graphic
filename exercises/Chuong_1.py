@@ -1,14 +1,14 @@
 # exercises/Chuong_1.py
 
-from components.BaseGraphicPanel import BaseGraphicPanel
+from components.GraphFunctionPanel import GraphFunctionPanel
 from components.AnalysisOverlayPanel import AnalysisOverlayPanel
-from PyQt6.QtWidgets import QPushButton, QHBoxLayout, QMessageBox, QLineEdit
+from PyQt6.QtWidgets import QMessageBox, QLineEdit
 from PyQt6.QtCore import QPointF
 from core import geometry_1
 import math
 
 
-class Chuong1Panel(BaseGraphicPanel):
+class Chuong1Panel(GraphFunctionPanel):
     """
     Chapter 1: Basic Graphics Elements
     Combines algorithms from:
@@ -25,7 +25,6 @@ class Chuong1Panel(BaseGraphicPanel):
         # ============================================================================
         # PHẦN 1: HỌA TIẾT CƠ BẢN
         # ============================================================================
-            "PHẦN 1 - HỌA TIẾT CƠ BẢN",
             "1. Hình tam giác thường",
             "2. Hình vuông",
             "3. Hình chữ nhật",
@@ -64,47 +63,6 @@ class Chuong1Panel(BaseGraphicPanel):
         # TẠO PANEL KHẢO SÁT OVERLAY (ẩn mặc định)
         # ====================================================================
         self.panel_khao_sat_overlay = AnalysisOverlayPanel(self.canvas)
-        
-        # ====================================================================
-        # THIẾT LẬP NÚT KHẢO SÁT (chỉ hiện khi chọn đồ thị hàm số)
-        # ====================================================================
-        self.btn_ve_hinh.hide()
-        
-        self.btn_khao_sat = QPushButton("KHẢO SÁT")
-        self.btn_khao_sat.setFixedHeight(46)
-        self.btn_khao_sat.setStyleSheet("""
-            QPushButton {
-                font-weight: 800; font-size: 10pt; letter-spacing: 0.5px;
-                border: None; border-radius: 6px;
-                background-color: #10b981; color: #ffffff;
-            }
-            QPushButton:hover { background-color: #059669; }
-            QPushButton:pressed { background-color: #047857; }
-        """)
-        
-        self.btn_ve_hinh_moi = QPushButton("VẼ ĐỒ THỊ")
-        self.btn_ve_hinh_moi.setFixedHeight(46)
-        self.btn_ve_hinh_moi.setStyleSheet("""
-            QPushButton {
-                font-weight: 800; font-size: 10pt; letter-spacing: 0.5px;
-                border: None; border-radius: 6px;
-                background-color: #0ea5e9; color: #ffffff;
-            }
-            QPushButton:hover { background-color: #0284c7; }
-            QPushButton:pressed { background-color: #0369a1; }
-        """)
-        
-        layout_hang_nut = QHBoxLayout()
-        layout_hang_nut.setSpacing(8)
-        layout_hang_nut.addWidget(self.btn_ve_hinh_moi, stretch=1)
-        layout_hang_nut.addWidget(self.btn_khao_sat, stretch=1)
-        
-        layout_sb = self.sidebar_phai.layout()  # type: ignore
-        layout_sb.insertLayout(4, layout_hang_nut)  # type: ignore
-        layout_sb.insertSpacing(5, 6)  # type: ignore
-        
-        self.btn_ve_hinh_moi.clicked.connect(self.xu_ly_logic_ve)
-        self.btn_khao_sat.clicked.connect(self.xu_ly_logic_khao_sat)
         
         # Ẩn nút khảo sát mặc định, chỉ hiện khi chọn đồ thị hàm số
         self.btn_khao_sat.hide()
@@ -174,7 +132,7 @@ class Chuong1Panel(BaseGraphicPanel):
             self.them_o_nhap("bk_trong", "Bán kính Trong:", "60")
 
         # ========================================================================
-        # PHẦN 2: HỌA TIẾT ĐƯỜNG TRÒN PHỨC TẠP (index 9-14)
+        # PHẦN 2: HỌA TIẾT ĐƯỜNG TRÒN PHỨC TẠP (index 8-13)
         # ========================================================================
 
         elif index == 8:  # Hệ đường tròn đồng tâm
@@ -430,7 +388,7 @@ class Chuong1Panel(BaseGraphicPanel):
                 d = float(self.inputs["d"].text())
                 e = float(self.inputs["e"].text())
                 scale = float(self.inputs["scale"].text())
-                pixels = geometry_1.get_rational_2_1_pixels(0, 0, a, b, c, d, e, scale=scale) # type: ignore
+                pixels = geometry_1.get_rational_2_1_pixels(0, 0, a, b, c, d, e, scale=scale)  # type: ignore
 
             self.canvas.cap_nhat_hinh_ve(pixels)
 

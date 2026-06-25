@@ -1,6 +1,6 @@
 # core/geometry_1.py
 import math
-from core.algorithms import bresenham_line, midpoint_circle, math_to_pixel
+from core.algorithms import bresenham_line, midpoint_line, midpoint_circle, midpoint_ellipse, math_to_pixel
 
 def get_triangle_pixels(x_tam, y_tam, a, b, c):
     if not ((a + b > c) and (a + c > b) and (b + c > a)):
@@ -85,16 +85,6 @@ def get_circle_pixels(x_tam, y_tam, r):
     if r <= 0:
         return []
     return midpoint_circle(x_tam, y_tam, r)
-
-def get_concentric_circles_pixels(x_tam, y_tam, r_ngoai, r_trong):
-    """
-    HÀM VẼ CẶP ĐƯỜNG TRÒN ĐỒNG TÂM
-    - Ứng dụng: Vẽ bánh xe, vòng nhẫn, mục tiêu bắn cung...
-    """
-    if r_ngoai <= 0 or r_trong <= 0:
-        return []
-    # Vẽ đường tròn lớn cộng nối tiếp với đường tròn nhỏ
-    return midpoint_circle(x_tam, y_tam, r_ngoai) + midpoint_circle(x_tam, y_tam, r_trong)
 
 def get_target_pixels(x_tam, y_tam, basic_r, so_vong):
     """Hình 1: Hệ đường tròn đồng tâm (Bia bắn cung)"""
@@ -262,6 +252,182 @@ def get_rational_1_1_pixels(x_tam, y_tam, a, b, c, d, x_min=-15, x_max=15, step=
         pixels.extend(bresenham_line(pixel_points_2[i][0], pixel_points_2[i][1], pixel_points_2[i+1][0], pixel_points_2[i+1][1]))
         
     return pixels
+
+class ToaDo2D:
+    """Lớp tọa độ 2D dùng cho các hàm vẽ độc lập."""
+    def __init__(self, x=0, y=0):
+        self.x = x
+        self.y = y
+    def __repr__(self):
+        return f"({self.x},{self.y})"
+
+def _angle_between(goc, g1, g2):
+    """Kiểm tra góc goc (rad) có nằm trong đoạn [g1, g2] (rad, 0..2pi) không."""
+    # Đưa g1,g2 về [0, 2pi)
+    g1 = g1 % (2 * math.pi)
+    g2 = g2 % (2 * math.pi)
+    goc = math.atan2(math.sin(goc), math.cos(goc))  # đưa về (-pi, pi]
+    if goc < 0:
+        goc += 2 * math.pi
+    if g1 <= g2:
+        return g1 <= goc <= g2
+    else:  # qua mốc 2pi
+        return goc >= g1 or goc <= g2
+
+def Arc(x0, y0, g1, g2, R):
+    """
+    Vẽ cung tròn tâm (x0,y0) bán kính R, góc từ g1 đến g2 (độ).
+    Trả về list pixel.
+    """
+    if R <= 0:
+        return []
+    rad1 = math.radians(g1)
+    rad2 = math.radians(g2)
+    # Lấy tất cả pixel của đường tròn bằng midpoint_circle
+    all_pixels = midpoint_circle(x0, y0, R)
+    # Lọc pixel theo góc
+    result = []
+    for px, py in all_pixels:
+        dx = px - x0
+        dy = py - y0
+        # Tính góc của pixel này
+        goc = math.atan2(dy, dx)
+        if goc < 0:
+            goc += 2 * math.pi
+        c1 = rad1 % (2 * math.pi)
+        c2 = rad2 % (2 * math.pi)
+        if c1 <= c2:
+            if c1 <= goc <= c2:
+                result.append((px, py))
+        else:
+            if goc >= c1 or goc <= c2:
+                result.append((px, py))
+    return result
+
+def Sector(x0, y0, g1, g2, Rx, Ry):
+    """
+    Vẽ cung Ellipse tâm (x0,y0) bán kính Rx, Ry, góc từ g1 đến g2 (độ).
+    Trả về list pixel.
+    """
+    if Rx <= 0 or Ry <= 0:
+        return []
+    rad1 = math.radians(g1)
+    rad2 = math.radians(g2)
+    all_pixels = midpoint_ellipse(x0, y0, Rx, Ry)
+    result = []
+    for px, py in all_pixels:
+        dx = px - x0
+        dy = py - y0
+        goc = math.atan2(dy, dx)
+        if goc < 0:
+            goc += 2 * math.pi
+        c1 = rad1 % (2 * math.pi)
+        c2 = rad2 % (2 * math.pi)
+        if c1 <= c2:
+            if c1 <= goc <= c2:
+                result.append((px, py))
+        else:
+            if goc >= c1 or goc <= c2:
+                result.append((px, py))
+    return result
+
+def DrawPoly(P, n, xc, yc, R):
+    """
+    Vẽ đa giác đều n đỉnh nội tiếp đường tròn tâm (xc,yc) bán kính R.
+    P: list ToaDo2D (sẽ được điền tọa độ đỉnh sau khi gọi).
+    Trả về list pixel.
+    """
+    if n < 3 or R <= 0:
+        return []
+    # Điền tọa độ các đỉnh vào mảng P
+    for i in range(n):
+        goc = i * (2 * math.pi / n) - math.pi / 2
+        P[i].x = int(xc + R * math.cos(goc))
+        P[i].y = int(yc + R * math.sin(goc))
+    pixels = []
+    for i in range(n):
+        pixels.extend(bresenham_line(
+            P[i].x, P[i].y,
+            P[(i + 1) % n].x, P[(i + 1) % n].y
+        ))
+    return pixels
+
+def Circle3P(A, B, C):
+    """
+    Vẽ đường tròn đi qua 3 điểm A, B, C (ToaDo2D).
+    Trả về list pixel.
+    """
+    # Giải hệ tìm tâm đường tròn ngoại tiếp
+    D = 2 * (A.x * (B.y - C.y) + B.x * (C.y - A.y) + C.x * (A.y - B.y))
+    if D == 0:
+        return []  # 3 điểm thẳng hàng
+    Ux = ((A.x**2 + A.y**2) * (B.y - C.y) + (B.x**2 + B.y**2) * (C.y - A.y) + (C.x**2 + C.y**2) * (A.y - B.y)) / D
+    Uy = ((A.x**2 + A.y**2) * (C.x - B.x) + (B.x**2 + B.y**2) * (A.x - C.x) + (C.x**2 + C.y**2) * (B.x - A.x)) / D
+    cx = int(round(Ux))
+    cy = int(round(Uy))
+    r = int(round(math.sqrt((A.x - cx)**2 + (A.y - cy)**2)))
+    if r <= 0:
+        return []
+    return midpoint_circle(cx, cy, r)
+
+def Arc3P(A, B, C):
+    """
+    Vẽ cung tròn đi qua 3 điểm A, B, C (ToaDo2D).
+    B là điểm giữa (xác định cung từ A qua B đến C).
+    Trả về list pixel.
+    """
+    # Tìm tâm và bán kính
+    D = 2 * (A.x * (B.y - C.y) + B.x * (C.y - A.y) + C.x * (A.y - B.y))
+    if D == 0:
+        return []
+    Ux = ((A.x**2 + A.y**2) * (B.y - C.y) + (B.x**2 + B.y**2) * (C.y - A.y) + (C.x**2 + C.y**2) * (A.y - B.y)) / D
+    Uy = ((A.x**2 + A.y**2) * (C.x - B.x) + (B.x**2 + B.y**2) * (A.x - C.x) + (C.x**2 + C.y**2) * (B.x - A.x)) / D
+    cx = int(round(Ux))
+    cy = int(round(Uy))
+    r = int(round(math.sqrt((A.x - cx)**2 + (A.y - cy)**2)))
+    if r <= 0:
+        return []
+
+    # Tính góc của 3 điểm
+    gocA = math.atan2(A.y - cy, A.x - cx)
+    gocB = math.atan2(B.y - cy, B.x - cx)
+    gocC = math.atan2(C.y - cy, C.x - cx)
+
+    # Đưa về [0, 2pi)
+    def to_2pi(a):
+        return a if a >= 0 else a + 2 * math.pi
+
+    gA = to_2pi(gocA)
+    gB = to_2pi(gocB)
+    gC = to_2pi(gocC)
+
+    # ponytail: Xác định cung đi từ A đến C theo chiều dương (ngược kim đồng hồ) qua B
+    # Nếu B nằm giữa A và C (theo chiều dương) => từ A đến C xuôi
+    # Nếu không => từ C đến A xuôi (tức cung ngược lại)
+    if gA <= gC:
+        chieu_thuan = gA <= gB <= gC
+    else:
+        chieu_thuan = gB >= gA or gB <= gC
+
+    if chieu_thuan:
+        g1, g2 = gA, gC
+    else:
+        g1, g2 = gC, gA
+
+    # Lấy pixel đường tròn, lọc theo góc
+    all_pixels = midpoint_circle(cx, cy, r)
+    result = []
+    for px, py in all_pixels:
+        dx = px - cx
+        dy = py - cy
+        goc = to_2pi(math.atan2(dy, dx))
+        if g1 <= g2:
+            if g1 <= goc <= g2:
+                result.append((px, py))
+        else:
+            if goc >= g1 or goc <= g2:
+                result.append((px, py))
+    return result
 
 def get_rational_2_1_pixels(x_tam, y_tam, a, b, c, d, e, x_min=-15, x_max=15, step=0.02, scale=40):
     """5. Hàm phân thức bậc 2 / bậc 1: y = (ax^2 + bx + c) / (dx + e)"""

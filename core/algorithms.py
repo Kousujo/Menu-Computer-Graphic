@@ -19,6 +19,62 @@ def bresenham_line(x1, y1, x2, y2):
             y1 += sy
     return pixels
 
+def midpoint_line(x1, y1, x2, y2):
+    """
+    Vẽ đoạn thẳng bằng thuật toán MidPoint, xử lý tất cả các trường hợp slope.
+    - 0 <= |m| <= 1: x đóng vai trò biến chạy
+    - |m| > 1:        y đóng vai trò biến chạy
+    """
+    pixels = []
+    dx = x2 - x1
+    dy = y2 - y1
+
+    # Nếu là 1 điểm
+    if dx == 0 and dy == 0:
+        return [(x1, y1)]
+
+    ax = abs(dx)
+    ay = abs(dy)
+    sx = 1 if dx > 0 else -1
+    sy = 1 if dy > 0 else -1
+
+    # Trường hợp 1: |m| <= 1 -> x là biến chạy
+    if ax >= ay:
+        x = x1
+        y = y1
+        d = ay * 2 - ax           # ponytail: decision param ban đầu
+        dE = ay * 2               # increment khi chọn E
+        dNE = (ay - ax) * 2       # increment khi chọn NE
+        while True:
+            pixels.append((x, y))
+            if x == x2:
+                break
+            if d <= 0:
+                d += dE
+            else:
+                d += dNE
+                y += sy
+            x += sx
+    # Trường hợp 2: |m| > 1 -> y là biến chạy
+    else:
+        x = x1
+        y = y1
+        d = ax * 2 - ay
+        dE = ax * 2
+        dNE = (ax - ay) * 2
+        while True:
+            pixels.append((x, y))
+            if y == y2:
+                break
+            if d <= 0:
+                d += dE
+            else:
+                d += dNE
+                x += sx
+            y += sy
+
+    return pixels
+
 def midpoint_circle(xc, yc, r):
     if r <= 0:
         return []

@@ -30,18 +30,18 @@ class Chuong2Panel(BaseGraphicPanel):
         tam_y = self.canvas.height() // 2 if self.canvas.height() > 0 else 300
 
         if row == 0:  # Tô màu hình tròn
-            self.tao_truong_nhap("xc", "Tâm X (xc):", str(tam_x))
-            self.tao_truong_nhap("yc", "Tâm Y (yc):", str(tam_y))
-            self.tao_truong_nhap("r", "Bán kính (R):", "100")
+            self.them_o_nhap("xc", "Tâm X (xc):", str(tam_x))
+            self.them_o_nhap("yc", "Tâm Y (yc):", str(tam_y))
+            self.them_o_nhap("r", "Bán kính (R):", "100")
         elif row == 1:  # Tô màu hình Ellipse
-            self.tao_truong_nhap("xc", "Tâm X (xc):", str(tam_x))
-            self.tao_truong_nhap("yc", "Tâm Y (yc):", str(tam_y))
-            self.tao_truong_nhap("a", "Bán kính trục lớn (a):", "150")
-            self.tao_truong_nhap("b", "Bán kính trục nhỏ (b):", "80")
+            self.them_o_nhap("xc", "Tâm X (xc):", str(tam_x))
+            self.them_o_nhap("yc", "Tâm Y (yc):", str(tam_y))
+            self.them_o_nhap("a", "Bán kính trục lớn (a):", "150")
+            self.them_o_nhap("b", "Bán kính trục nhỏ (b):", "80")
             
         self.cap_nhat_kich_thuoc_panel()
 
-    def tao_truong_nhap(self, key, label_text, value_default):
+    def them_o_nhap(self, key, label_text, value_default):
         label = QLabel(label_text)
         edit = QLineEdit()
         edit.setText(value_default)

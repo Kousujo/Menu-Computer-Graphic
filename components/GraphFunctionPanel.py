@@ -6,9 +6,9 @@ class GraphFunctionPanel(BaseGraphicPanel):
     def __init__(self, mainframe, title_sidebar="KHẢO SÁT HÀM SỐ"):
         super().__init__(mainframe, title_sidebar=title_sidebar)
         
-        self.chỉnh_sua_nut_sidebar()
+        self.chinh_sua_nut_sidebar()
 
-    def chỉnh_sua_nut_sidebar(self):
+    def chinh_sua_nut_sidebar(self):
         """
         Bóc tách nút cũ và sắp xếp lại layout nút bấm theo hàng ngang
         để tích hợp thêm nút Khảo sát mà không làm vỡ giao diện.
