@@ -2,6 +2,14 @@
 import math
 from core.algorithms import bresenham_line, midpoint_line, midpoint_circle, midpoint_ellipse, math_to_pixel
 
+
+class ToaDo2D:
+    """Lớp biểu diễn điểm 2 chiều với tọa độ x, y."""
+    def __init__(self, x=0, y=0):
+        self.x = x
+        self.y = y
+
+
 def get_triangle_pixels(x_tam, y_tam, a, b, c):
     if not ((a + b > c) and (a + c > b) and (b + c > a)):
         return []
@@ -51,19 +59,6 @@ def get_isosceles_trapezoid_pixels(x_tam, y_tam, day_lon, day_nho, cao):
            bresenham_line(xb, yb, xc, yc) + \
            bresenham_line(xc, yc, xd, yd) + \
            bresenham_line(xd, yd, xa, ya)
-
-def get_regular_polygon_pixels(x_tam, y_tam, n, r):
-    if n < 3:
-        return []
-    pixels = []
-    danh_sach_dinh = []
-    for i in range(n):
-        goc = i * (2 * math.pi / n) - math.pi / 2
-        danh_sach_dinh.append((int(x_tam + r * math.cos(goc)), int(y_tam + r * math.sin(goc))))
-    for i in range(n):
-        pixels += bresenham_line(danh_sach_dinh[i][0], danh_sach_dinh[i][1], 
-                                 danh_sach_dinh[(i + 1) % n][0], danh_sach_dinh[(i + 1) % n][1])
-    return pixels
 
 def get_star_pixels(x_tam, y_tam, r_ngoai, r_trong):
     tong_so_dinh = 10
@@ -173,7 +168,7 @@ def get_star_with_inner_circle_pixels(x_tam, y_tam, r, r_ngoai):
         pixels.extend(bresenham_line(xi, yi, xf_ke, yf_ke))
     return pixels
 
-def get_line_function_pixels(x_tam, y_tam, a, b, x_min=-15, x_max=15, step=0.1, scale=40):
+def get_line_function_pixels(x_tam, y_tam, a, b, x_min=-15, x_max=15, step=0.1, scale=40.0):
     """1. Hàm bậc nhất: y = ax + b"""
     pixel_points = []
     x = x_min
@@ -187,7 +182,7 @@ def get_line_function_pixels(x_tam, y_tam, a, b, x_min=-15, x_max=15, step=0.1, 
         pixels.extend(bresenham_line(pixel_points[i][0], pixel_points[i][1], pixel_points[i+1][0], pixel_points[i+1][1]))
     return pixels
 
-def get_quadratic_function_pixels(x_tam, y_tam, a, b, c, x_min=-15, x_max=15, step=0.05, scale=40):
+def get_quadratic_function_pixels(x_tam, y_tam, a, b, c, x_min=-15, x_max=15, step=0.05, scale=40.0):
     """2. Hàm bậc hai (Parabol): y = ax^2 + bx + c"""
     pixel_points = []
     x = x_min
@@ -201,7 +196,7 @@ def get_quadratic_function_pixels(x_tam, y_tam, a, b, c, x_min=-15, x_max=15, st
         pixels.extend(bresenham_line(pixel_points[i][0], pixel_points[i][1], pixel_points[i+1][0], pixel_points[i+1][1]))
     return pixels
 
-def get_cubic_function_pixels(x_tam, y_tam, a, b, c, d, x_min=-15, x_max=15, step=0.05, scale=40):
+def get_cubic_function_pixels(x_tam, y_tam, a, b, c, d, x_min=-15, x_max=15, step=0.05, scale=40.0):
     """3. Hàm bậc ba: y = ax^3 + bx^2 + cx + d"""
     pixel_points = []
     x = x_min
@@ -215,7 +210,7 @@ def get_cubic_function_pixels(x_tam, y_tam, a, b, c, d, x_min=-15, x_max=15, ste
         pixels.extend(bresenham_line(pixel_points[i][0], pixel_points[i][1], pixel_points[i+1][0], pixel_points[i+1][1]))
     return pixels
 
-def get_rational_1_1_pixels(x_tam, y_tam, a, b, c, d, x_min=-15, x_max=15, step=0.02, scale=40):
+def get_rational_1_1_pixels(x_tam, y_tam, a, b, c, d, x_min=-15, x_max=15, step=0.02, scale=40.0):
     """4. Hàm phân thức bậc 1 / bậc 1: y = (ax + b) / (cx + d)"""
     pixels = []
     
@@ -253,26 +248,37 @@ def get_rational_1_1_pixels(x_tam, y_tam, a, b, c, d, x_min=-15, x_max=15, step=
         
     return pixels
 
-class ToaDo2D:
-    """Lớp tọa độ 2D dùng cho các hàm vẽ độc lập."""
-    def __init__(self, x=0, y=0):
-        self.x = x
-        self.y = y
-    def __repr__(self):
-        return f"({self.x},{self.y})"
+def get_rational_2_1_pixels(x_tam, y_tam, a, b, c, d, e, x_min=-15, x_max=15, step=0.02, scale=40.0):
+    """5. Hàm phân thức bậc 2 / bậc 1: y = (ax^2 + bx + c) / (dx + e)"""
+    pixels = []
+    if d == 0:
+        return []
+        
+    tiem_can_dung = -e / d
+    epsilon = 0.05
+    
+    # Nhánh 1
+    pixel_points_1 = []
+    x = x_min
+    while x < tiem_can_dung - epsilon:
+        y = (a * (x**2) + b * x + c) / (d * x + e)
+        pixel_points_1.append(math_to_pixel(x, y, x_tam, y_tam, scale))
+        x += step
+        
+    # Nhánh 2
+    pixel_points_2 = []
+    x = tiem_can_dung + epsilon
+    while x <= x_max:
+        y = (a * (x**2) + b * x + c) / (d * x + e)
+        pixel_points_2.append(math_to_pixel(x, y, x_tam, y_tam, scale))
+        x += step
 
-def _angle_between(goc, g1, g2):
-    """Kiểm tra góc goc (rad) có nằm trong đoạn [g1, g2] (rad, 0..2pi) không."""
-    # Đưa g1,g2 về [0, 2pi)
-    g1 = g1 % (2 * math.pi)
-    g2 = g2 % (2 * math.pi)
-    goc = math.atan2(math.sin(goc), math.cos(goc))  # đưa về (-pi, pi]
-    if goc < 0:
-        goc += 2 * math.pi
-    if g1 <= g2:
-        return g1 <= goc <= g2
-    else:  # qua mốc 2pi
-        return goc >= g1 or goc <= g2
+    for i in range(len(pixel_points_1) - 1):
+        pixels.extend(bresenham_line(pixel_points_1[i][0], pixel_points_1[i][1], pixel_points_1[i+1][0], pixel_points_1[i+1][1]))
+    for i in range(len(pixel_points_2) - 1):
+        pixels.extend(bresenham_line(pixel_points_2[i][0], pixel_points_2[i][1], pixel_points_2[i+1][0], pixel_points_2[i+1][1]))
+        
+    return pixels
 
 def Arc(x0, y0, g1, g2, R):
     """
@@ -428,35 +434,3 @@ def Arc3P(A, B, C):
             if goc >= g1 or goc <= g2:
                 result.append((px, py))
     return result
-
-def get_rational_2_1_pixels(x_tam, y_tam, a, b, c, d, e, x_min=-15, x_max=15, step=0.02, scale=40):
-    """5. Hàm phân thức bậc 2 / bậc 1: y = (ax^2 + bx + c) / (dx + e)"""
-    pixels = []
-    if d == 0:
-        return []
-        
-    tiem_can_dung = -e / d
-    epsilon = 0.05
-    
-    # Nhánh 1
-    pixel_points_1 = []
-    x = x_min
-    while x < tiem_can_dung - epsilon:
-        y = (a * (x**2) + b * x + c) / (d * x + e)
-        pixel_points_1.append(math_to_pixel(x, y, x_tam, y_tam, scale))
-        x += step
-        
-    # Nhánh 2
-    pixel_points_2 = []
-    x = tiem_can_dung + epsilon
-    while x <= x_max:
-        y = (a * (x**2) + b * x + c) / (d * x + e)
-        pixel_points_2.append(math_to_pixel(x, y, x_tam, y_tam, scale))
-        x += step
-
-    for i in range(len(pixel_points_1) - 1):
-        pixels.extend(bresenham_line(pixel_points_1[i][0], pixel_points_1[i][1], pixel_points_1[i+1][0], pixel_points_1[i+1][1]))
-    for i in range(len(pixel_points_2) - 1):
-        pixels.extend(bresenham_line(pixel_points_2[i][0], pixel_points_2[i][1], pixel_points_2[i+1][0], pixel_points_2[i+1][1]))
-        
-    return pixels

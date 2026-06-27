@@ -151,7 +151,7 @@ def midpoint_ellipse(xc, yc, rx, ry):
 
     return list(set(pixels))
 
-def math_to_pixel(x_math, y_math, center_x, center_y, scale=20):
+def math_to_pixel(x_math, y_math, center_x, center_y, scale=20.0):
     px = int(center_x + x_math * scale)
     py = int(center_y - y_math * scale)
     return px, py
