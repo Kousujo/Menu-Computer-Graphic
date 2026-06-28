@@ -9,15 +9,6 @@ import math
 
 
 class Chuong1Panel(GraphFunctionPanel):
-    """
-    Chapter 1: Basic Graphics Elements
-    Combines algorithms from:
-    - Bai_1: Basic shapes (8 algorithms)
-    - Bai_2: Circle patterns (6 algorithms)
-    - Bai_3: Mathematical functions (5 algorithms)
-    Total: 23 algorithms integrated into one unified panel
-    """
-
     def __init__(self, mainframe):
         super().__init__(mainframe, title_sidebar="CHƯƠNG 1: CÁC YẾU TỐ CƠ SỞ")
 
