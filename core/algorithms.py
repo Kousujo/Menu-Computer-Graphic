@@ -260,6 +260,74 @@ def flood_fill(start_x, start_y, is_inside_boundary, color_tuple=(3, 105, 161), 
                     queue.append((nx, ny))
     return pixels
 
+
+def scanline_polygon_fill_tung_buoc(vertices, color_tuple=(3, 105, 161)):
+    """
+    Generator: yield từng dòng scanline của thuật toán Scanline Fill.
+    Mỗi lần yield là một list pixel của một hàng y.
+    """
+    if len(vertices) < 3:
+        return
+    ymin = int(min(y for _, y in vertices))
+    ymax = int(max(y for _, y in vertices))
+
+    edges = []
+    n = len(vertices)
+    for i in range(n):
+        p1 = vertices[i]
+        p2 = vertices[(i + 1) % n]
+        if p1[1] != p2[1]:
+            if p1[1] < p2[1]:
+                edges.append((p1, p2))
+            else:
+                edges.append((p2, p1))
+
+    for y in range(ymin, ymax + 1):
+        intersections = []
+        for p1, p2 in edges:
+            if p1[1] <= y < p2[1]:
+                x = p1[0] + (y - p1[1]) * (p2[0] - p1[0]) / (p2[1] - p1[1])
+                intersections.append(x)
+        intersections.sort()
+        row = []
+        for i in range(0, len(intersections) - 1, 2):
+            x_start = int(round(intersections[i]))
+            x_end = int(round(intersections[i+1]))
+            for x in range(x_start, x_end + 1):
+                row.append((x, y, color_tuple))
+        if row:
+            yield row
+
+
+def flood_fill_tung_buoc(start_x, start_y, is_inside_boundary,
+                          color_tuple=(3, 105, 161), max_pixels=50000, batch_size=300):
+    """
+    Generator: yield từng batch pixel (~batch_size) của thuật toán Loang (Flood Fill BFS).
+    """
+    visited = set()
+    queue = [(start_x, start_y)]
+    visited.add((start_x, start_y))
+    total = 0
+
+    while queue and total < max_pixels:
+        batch = []
+        # Lấy tối đa batch_size pixel trong một lần xử lý
+        for _ in range(batch_size):
+            if not queue or total >= max_pixels:
+                break
+            cx, cy = queue.pop(0)
+            if is_inside_boundary(cx, cy):
+                batch.append((cx, cy, color_tuple))
+                total += 1
+                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                    nx, ny = cx + dx, cy + dy
+                    if (nx, ny) not in visited:
+                        visited.add((nx, ny))
+                        queue.append((nx, ny))
+        if batch:
+            yield batch
+
+
 if __name__ == "__main__":
     # Test check cho cac thuat toan vua duoc them (ponytail: test nhanh khong can framework)
     test_vertices = [(0, 0), (4, 0), (4, 4), (0, 4)] # Hinh vuong

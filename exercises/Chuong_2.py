@@ -3,7 +3,14 @@
 from components.BaseGraphicPanel import BaseGraphicPanel
 from PyQt6.QtWidgets import QLineEdit, QLabel, QRadioButton, QButtonGroup, QFrame, QHBoxLayout
 from PyQt6.QtCore import Qt
-from core.geometry_2 import get_circle_fill_pixels, get_filled_circle_pixels, get_filled_ellipse_pixels
+from core.geometry_2 import (
+    get_circle_fill_pixels,
+    get_circle_fill_pixels_tung_buoc,
+    get_ellipse_fill_pixels,
+    get_ellipse_fill_pixels_tung_buoc,
+)
+from core.geometry_1 import get_circle_pixels
+from core.algorithms import midpoint_ellipse
 
 
 class Chuong2Panel(BaseGraphicPanel):
@@ -45,11 +52,12 @@ class Chuong2Panel(BaseGraphicPanel):
             self.them_o_nhap("yc", "Tâm Y (yc):", str(tam_y))
             self.them_o_nhap("a", "Bán kính trục lớn (a):", "150")
             self.them_o_nhap("b", "Bán kính trục nhỏ (b):", "80")
+            self._them_algorithm_selector()
 
         self.cap_nhat_kich_thuoc_panel()
 
     def _them_algorithm_selector(self):
-        """Thêm 3 radio button chọn thuật toán vào form (tạo mới mỗi lần)."""
+        """Thêm 3 radio button chọn thuật toán + checkbox animation vào form."""
         group = QButtonGroup(self)
         radio_to_san = QRadioButton("Tô sẵn")
         radio_scanline = QRadioButton("Scanline")
@@ -104,6 +112,7 @@ class Chuong2Panel(BaseGraphicPanel):
         label.setStyleSheet("color: #f1f5f9; font-size: 10pt; font-weight: 600; border: none; background: transparent;")
         self.form_layout.addRow(label, selector)
 
+
     def them_o_nhap(self, key, label_text, value_default):
         label = QLabel(label_text)
         edit = QLineEdit()
@@ -124,23 +133,56 @@ class Chuong2Panel(BaseGraphicPanel):
             print("Lỗi: Vui lòng nhập thông số hình học hợp lệ ở dạng số nguyên!")
             return
 
-        danh_sach_pixel = []
+        xc = params.get("xc", 200)
+        yc = params.get("yc", 200)
 
-        if row == 0:  # Tô màu hình tròn -> dùng hàm điều phối
-            xc = params.get("xc", 200)
-            yc = params.get("yc", 200)
+        if row == 0:  # Tô màu hình tròn
             r = params.get("r", 50)
-            danh_sach_pixel = get_circle_fill_pixels(xc, yc, r,
-                                                     algorithm=self._selected_algorithm,
-                                                     color_tuple=(3, 105, 161))
+            if self._selected_algorithm in ("scanline", "loang"):
+                # Vẽ outline trước, sau đó tô màu từng bước
+                def circle_gen():
+                    outline = get_circle_pixels(xc, yc, r)
+                    if outline:
+                        yield outline
+                    yield from get_circle_fill_pixels_tung_buoc(
+                        xc, yc, r,
+                        algorithm=self._selected_algorithm,
+                        color_tuple=(3, 105, 161),
+                        batch_size=400,
+                    )
+                self.canvas.cap_nhat_hinh_ve_co_hoat_anh(circle_gen())
+                return
+            # Tô sẵn: vẽ outline trước, sau đó tô màu (outline vẽ sau nên nằm trên)
+            outline = get_circle_pixels(xc, yc, r)
+            danh_sach_pixel = get_circle_fill_pixels(
+                xc, yc, r,
+                algorithm=self._selected_algorithm,
+                color_tuple=(3, 105, 161),
+            ) + outline
 
         elif row == 1:  # Tô màu hình Ellipse
-            xc = params.get("xc", 200)
-            yc = params.get("yc", 200)
             a = params.get("a", 80)
-            # Màu xanh lá đại diện
             b = params.get("b", 50)
-            danh_sach_pixel = get_filled_ellipse_pixels(xc, yc, a, b, color_tuple=(16, 185, 129))
+            if self._selected_algorithm in ("scanline", "loang"):
+                # Vẽ outline ellipse trước, sau đó tô màu từng bước
+                def ellipse_gen():
+                    outline = midpoint_ellipse(xc, yc, a, b)
+                    if outline:
+                        yield outline
+                    yield from get_ellipse_fill_pixels_tung_buoc(
+                        xc, yc, a, b,
+                        algorithm=self._selected_algorithm,
+                        color_tuple=(16, 185, 129),
+                        batch_size=400,
+                    )
+                self.canvas.cap_nhat_hinh_ve_co_hoat_anh(ellipse_gen())
+                return
+            outline = midpoint_ellipse(xc, yc, a, b)
+            danh_sach_pixel = get_ellipse_fill_pixels(
+                xc, yc, a, b,
+                algorithm=self._selected_algorithm,
+                color_tuple=(16, 185, 129),
+            ) + outline
 
         # Đẩy dữ liệu ra bộ đệm vẽ và yêu cầu canvas render lại đồ họa
         self.canvas.cap_nhat_hinh_ve(danh_sach_pixel)

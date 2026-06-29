@@ -1,6 +1,6 @@
 # components/GraphicArea.py
 from PyQt6.QtWidgets import QWidget
-from PyQt6.QtCore import Qt, QPointF, QPoint
+from PyQt6.QtCore import Qt, QPointF, QPoint, QTimer
 from PyQt6.QtGui import QPainter, QColor, QPen, QTransform
 
 class GraphicArea(QWidget):
@@ -14,6 +14,13 @@ class GraphicArea(QWidget):
         self.vi_tri_chuot_cu = QPointF()
         self.dang_keo_chuot = False
 
+        # Animation engine
+        self._timer_hoat_anh = QTimer(self)
+        self._timer_hoat_anh.setInterval(10)  # nhịp 10ms (~33% nhanh hơn)
+        self._timer_hoat_anh.timeout.connect(self._xu_ly_frame_hoat_anh)
+        self._generator_hoat_anh = None
+        self._dang_hoat_anh = False
+
     def dat_lai_khung_nhin(self):
         self.he_so_zoom = 1.0
         self.goc_toa_do_pan = QPointF(0, 0)
@@ -22,6 +29,32 @@ class GraphicArea(QWidget):
     def cap_nhat_hinh_ve(self, danh_sach_pixel):
         self.danh_sach_pixel = danh_sach_pixel
         self.update()
+
+    def cap_nhat_hinh_ve_co_hoat_anh(self, generator):
+        """Nhận generator, chạy animation với QTimer (nhịp 15ms)."""
+        # Dừng animation cũ nếu đang chạy
+        self._timer_hoat_anh.stop()
+        # Xóa sạch bộ đệm pixel cũ
+        self.danh_sach_pixel = []
+        self._generator_hoat_anh = generator
+        self._dang_hoat_anh = True
+        self._timer_hoat_anh.start()
+
+    def _xu_ly_frame_hoat_anh(self):
+        """Callback QTimer: lấy batch tiếp theo từ generator và vẽ."""
+        gen = self._generator_hoat_anh
+        if gen is None:
+            self._timer_hoat_anh.stop()
+            self._dang_hoat_anh = False
+            return
+        try:
+            batch = next(gen)
+            self.danh_sach_pixel.extend(batch)
+            self.update()
+        except StopIteration:
+            self._timer_hoat_anh.stop()
+            self._dang_hoat_anh = False
+            self._generator_hoat_anh = None
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -65,18 +98,27 @@ class GraphicArea(QWidget):
         but_mac_dinh = QPen(QColor("#1e293b"), 3)
         painter.setPen(but_mac_dinh)
         
+        # Vẽ fill (3-tuple) trước — màu tô
         if self.danh_sach_pixel:
             for p in self.danh_sach_pixel:
-                if len(p) == 3: # Định dạng chương 2: (x, y, (r, g, b))
+                if len(p) == 3:
                     x, y, color = p
                     painter.setPen(QPen(QColor(color[0], color[1], color[2]), 3))
                     painter.drawPoint(int(x), int(y))
-                elif len(p) == 2: # Định dạng chương 1: (x, y)
+        # Vẽ outline (2-tuple) sau — outline luôn nằm trên fill
+        if self.danh_sach_pixel:
+            for p in self.danh_sach_pixel:
+                if len(p) == 2:
                     x, y = p
                     painter.setPen(but_mac_dinh)
                     painter.drawPoint(int(x), int(y))
 
     def wheelEvent(self, event):
+        # ponytail: nếu chuột đang ở trên child widget (panel nhập liệu) → không zoom
+        child = self.childAt(event.position().toPoint())
+        if child is not None and child is not self:
+            event.ignore()
+            return
         if event.angleDelta().y() > 0:
             self.he_so_zoom *= 1.15
         else:

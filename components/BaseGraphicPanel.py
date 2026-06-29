@@ -1,14 +1,19 @@
 # BaseGraphicPanel.py
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QFrame, QPushButton, QLabel, QListWidget, QFormLayout
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QFrame,
+                              QPushButton, QLabel, QListWidget, QFormLayout,
+                              QScrollArea)
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
-from components.GraphicArea import GraphicArea  # Import class GraphicArea từ file riêng biệt
+from components.GraphicArea import GraphicArea
+
+_PANEL_CHIEU_CAO_CO_DINH = 260  # ponytail: đủ cho ~6-7 input, nếu dài hơn thì scroll
+
 
 class BaseGraphicPanel(QWidget):
     def __init__(self, mainframe, title_sidebar="DANH SÁCH YÊU CẦU"):
         super().__init__()
         self.mainframe = mainframe
-        
+
         self.font_chu_he_thong = QFont("Segoe UI", 14)
         self.setFont(self.font_chu_he_thong)
         self.setStyleSheet("background-color: #f8fafc;")
@@ -18,7 +23,7 @@ class BaseGraphicPanel(QWidget):
         layout_tong.setSpacing(12)
 
         # =================================================================
-        # KHU VỰC BÊN TRÁI: CANVAS VÀ PANEL NHẬP LIỆU DYNAMIC
+        # KHU VỰC BÊN TRÁI: CANVAS + PANEL NHẬP LIỆU (OVERLAY)
         # =================================================================
         vung_trai = QWidget()
         layout_trai = QVBoxLayout(vung_trai)
@@ -29,26 +34,26 @@ class BaseGraphicPanel(QWidget):
 
         self.panel_nhap_lieu = QFrame(self.canvas)
         self.panel_nhap_lieu.setAutoFillBackground(True)
-        self.panel_nhap_lieu.setGeometry(20, 20, 340, 50) 
+        self.panel_nhap_lieu.setGeometry(20, 20, 340, 50)
         self.panel_nhap_lieu.setStyleSheet("""
             QFrame#PanelNoi {
-                background-color: #1e293b; 
-                border: 1px solid #334155; 
+                background-color: #1e293b;
+                border: 1px solid #334155;
                 border-radius: 8px;
             }
             QLabel {
-                color: #f1f5f9; 
-                font-size: 10pt; 
+                color: #f1f5f9;
+                font-size: 10pt;
                 font-weight: 600;
                 border: none;
                 background: transparent;
             }
             QLineEdit {
-                background-color: #334155; 
-                color: #38bdf8; 
-                border: 1px solid #475569; 
-                border-radius: 4px; 
-                padding: 6px; 
+                background-color: #334155;
+                color: #38bdf8;
+                border: 1px solid #475569;
+                border-radius: 4px;
+                padding: 6px;
                 min-height: 25px;
                 font-size: 11pt;
                 font-weight: bold;
@@ -56,16 +61,34 @@ class BaseGraphicPanel(QWidget):
             QLineEdit:focus {
                 border: 1px solid #38bdf8;
             }
+            QScrollArea {
+                background: transparent;
+                border: none;
+            }
+            QScrollBar:vertical {
+                background: #1e293b;
+                width: 6px;
+                border: none;
+                border-radius: 3px;
+            }
+            QScrollBar::handle:vertical {
+                background: #475569;
+                border-radius: 3px;
+                min-height: 20px;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                height: 0px;
+            }
         """)
         self.panel_nhap_lieu.setObjectName("PanelNoi")
-        
+
         layout_noi = QVBoxLayout(self.panel_nhap_lieu)
         layout_noi.setContentsMargins(12, 12, 12, 12)
 
         self.btn_an_hien_form = QPushButton("Thu gọn bảng điều khiển ▲")
         self.btn_an_hien_form.setStyleSheet("""
             QPushButton {
-                font-size: 10pt; font-weight: bold; padding: 5px; 
+                font-size: 10pt; font-weight: bold; padding: 5px;
                 border: 1px solid #475569; border-radius: 4px;
                 background-color: #334155; color: #cbd5e1;
             }
@@ -74,13 +97,25 @@ class BaseGraphicPanel(QWidget):
         self.btn_an_hien_form.clicked.connect(self.xu_ly_an_hien_panel)
         layout_noi.addWidget(self.btn_an_hien_form)
 
-        # Khung chứa layout nhập liệu chính
+        # Khung cuộn chứa layout nhập liệu chính — cố định chiều cao
+        self.khung_cuon = QScrollArea()
+        self.khung_cuon.setWidgetResizable(True)
+        self.khung_cuon.setFixedHeight(_PANEL_CHIEU_CAO_CO_DINH)
+        # ponytail: viewport mặc định nền trắng → set transparent để ko có vệt trắng
+        self.khung_cuon.viewport().setStyleSheet("background: transparent; border: none;")
+
         self.khung_input = QWidget()
         self.khung_input.setStyleSheet("background: transparent; border: none;")
         self.form_layout = QFormLayout(self.khung_input)
         self.form_layout.setContentsMargins(0, 8, 0, 0)
         self.form_layout.setVerticalSpacing(8)
-        layout_noi.addWidget(self.khung_input)
+
+        self.khung_cuon.setWidget(self.khung_input)
+        layout_noi.addWidget(self.khung_cuon)
+
+        # ponytail: set kích thước cố định ngay từ đầu để panel mở đúng khi vào chương
+        self.panel_nhap_lieu.setFixedHeight(45 + _PANEL_CHIEU_CAO_CO_DINH)
+        self.panel_nhap_lieu.setFixedWidth(340)
 
         layout_tong.addWidget(vung_trai, stretch=1)
 
@@ -93,7 +128,7 @@ class BaseGraphicPanel(QWidget):
             QFrame { background-color: #0f172a; border-radius: 8px; }
             QLabel { color: #ffffff; border: none; }
         """)
-        
+
         layout_sb = QVBoxLayout(self.sidebar_phai)
         layout_sb.setContentsMargins(18, 20, 18, 20)
 
@@ -172,26 +207,21 @@ class BaseGraphicPanel(QWidget):
                 widget.deleteLater()
 
     def xu_ly_an_hien_panel(self):
-        if self.khung_input.isVisible():
-            self.khung_input.hide()
+        if self.khung_cuon.isVisible():
+            self.khung_cuon.hide()
             self.panel_nhap_lieu.setFixedHeight(45)
             self.btn_an_hien_form.setText("Mở rộng bảng điều khiển ▼")
         else:
-            self.khung_input.show()
-            self.panel_nhap_lieu.setMinimumHeight(0)
-            self.panel_nhap_lieu.setMaximumHeight(16777215)
-            self.cap_nhat_kich_thuoc_panel()
+            self.khung_cuon.show()
+            self.panel_nhap_lieu.setFixedHeight(45 + _PANEL_CHIEU_CAO_CO_DINH)
             self.btn_an_hien_form.setText("Thu gọn bảng điều khiển ▲")
+        self.panel_nhap_lieu.setFixedWidth(340)
 
     def cap_nhat_kich_thuoc_panel(self):
-        if self.khung_input.isVisible():
-            QTimer.singleShot(1, self._thuc_thi_co_gian)
-
-    def _thuc_thi_co_gian(self):
-        if self.panel_nhap_lieu.layout():
-            self.panel_nhap_lieu.layout().activate() # type: ignore
-        self.panel_nhap_lieu.adjustSize()
-        self.panel_nhap_lieu.setFixedWidth(340)
+        """Cập nhật kích thước panel sau khi thêm/xoá input."""
+        if self.khung_cuon.isVisible():
+            self.panel_nhap_lieu.setFixedHeight(45 + _PANEL_CHIEU_CAO_CO_DINH)
+            self.panel_nhap_lieu.setFixedWidth(340)
 
     def xu_ly_logic_ve(self):
         pass
