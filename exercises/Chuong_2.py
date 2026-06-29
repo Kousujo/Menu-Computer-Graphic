@@ -2,12 +2,13 @@
 
 from components.BaseGraphicPanel import BaseGraphicPanel
 from PyQt6.QtWidgets import QLineEdit, QLabel, QRadioButton, QButtonGroup, QFrame, QHBoxLayout
-from PyQt6.QtCore import Qt
 from core.geometry_2 import (
-    get_circle_fill_pixels,
-    get_circle_fill_pixels_tung_buoc,
-    get_ellipse_fill_pixels,
-    get_ellipse_fill_pixels_tung_buoc,
+    _circle_fill_to_san,
+    _circle_fill_scanline,
+    _circle_fill_loang,
+    _ellipse_fill_to_san,
+    _ellipse_fill_scanline,
+    _ellipse_fill_loang,
 )
 from core.geometry_1 import get_circle_pixels
 from core.algorithms import midpoint_ellipse
@@ -138,51 +139,41 @@ class Chuong2Panel(BaseGraphicPanel):
 
         if row == 0:  # Tô màu hình tròn
             r = params.get("r", 50)
-            if self._selected_algorithm in ("scanline", "loang"):
-                # Vẽ outline trước, sau đó tô màu từng bước
-                def circle_gen():
-                    outline = get_circle_pixels(xc, yc, r)
-                    if outline:
-                        yield outline
-                    yield from get_circle_fill_pixels_tung_buoc(
-                        xc, yc, r,
-                        algorithm=self._selected_algorithm,
-                        color_tuple=(3, 105, 161),
-                        batch_size=400,
-                    )
-                self.canvas.cap_nhat_hinh_ve_co_hoat_anh(circle_gen())
+            if self._selected_algorithm == "to_san":
+                # Tô sẵn: vẽ outline trước, sau đó tô màu (outline vẽ sau nên nằm trên)
+                outline = get_circle_pixels(xc, yc, r)
+                fill = _circle_fill_to_san(xc, yc, r, color_tuple=(3, 105, 161))
+                danh_sach_pixel = fill + outline
+                self.canvas.cap_nhat_hinh_ve(danh_sach_pixel)
                 return
-            # Tô sẵn: vẽ outline trước, sau đó tô màu (outline vẽ sau nên nằm trên)
-            outline = get_circle_pixels(xc, yc, r)
-            danh_sach_pixel = get_circle_fill_pixels(
-                xc, yc, r,
-                algorithm=self._selected_algorithm,
-                color_tuple=(3, 105, 161),
-            ) + outline
+            # Scanline hoặc Tô loang: animation
+            def circle_gen():
+                outline = get_circle_pixels(xc, yc, r)
+                if outline:
+                    yield outline
+                if self._selected_algorithm == "scanline":
+                    yield from _circle_fill_scanline(xc, yc, r, color_tuple=(3, 105, 161))
+                else:
+                    yield from _circle_fill_loang(xc, yc, r, color_tuple=(3, 105, 161), batch_size=400)
+            self.canvas.cap_nhat_hinh_ve_co_hoat_anh(circle_gen())
+            return
 
         elif row == 1:  # Tô màu hình Ellipse
             a = params.get("a", 80)
             b = params.get("b", 50)
-            if self._selected_algorithm in ("scanline", "loang"):
-                # Vẽ outline ellipse trước, sau đó tô màu từng bước
-                def ellipse_gen():
-                    outline = midpoint_ellipse(xc, yc, a, b)
-                    if outline:
-                        yield outline
-                    yield from get_ellipse_fill_pixels_tung_buoc(
-                        xc, yc, a, b,
-                        algorithm=self._selected_algorithm,
-                        color_tuple=(16, 185, 129),
-                        batch_size=400,
-                    )
-                self.canvas.cap_nhat_hinh_ve_co_hoat_anh(ellipse_gen())
+            if self._selected_algorithm == "to_san":
+                outline = midpoint_ellipse(xc, yc, a, b)
+                fill = _ellipse_fill_to_san(xc, yc, a, b, color_tuple=(16, 185, 129))
+                danh_sach_pixel = fill + outline
+                self.canvas.cap_nhat_hinh_ve(danh_sach_pixel)
                 return
-            outline = midpoint_ellipse(xc, yc, a, b)
-            danh_sach_pixel = get_ellipse_fill_pixels(
-                xc, yc, a, b,
-                algorithm=self._selected_algorithm,
-                color_tuple=(16, 185, 129),
-            ) + outline
-
-        # Đẩy dữ liệu ra bộ đệm vẽ và yêu cầu canvas render lại đồ họa
-        self.canvas.cap_nhat_hinh_ve(danh_sach_pixel)
+            def ellipse_gen():
+                outline = midpoint_ellipse(xc, yc, a, b)
+                if outline:
+                    yield outline
+                if self._selected_algorithm == "scanline":
+                    yield from _ellipse_fill_scanline(xc, yc, a, b, color_tuple=(16, 185, 129))
+                else:
+                    yield from _ellipse_fill_loang(xc, yc, a, b, color_tuple=(16, 185, 129), batch_size=400)
+            self.canvas.cap_nhat_hinh_ve_co_hoat_anh(ellipse_gen())
+            return

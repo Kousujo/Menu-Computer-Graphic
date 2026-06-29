@@ -78,6 +78,13 @@ class Chuong1Panel(GraphFunctionPanel):
         self.btn_ve_hinh.setVisible(not la_do_thi_ham_so)
 
         # ========================================================================
+        # Ô NHẬP TÂM TOẠ ĐỘ (xc, yc) — dùng cho basic shapes & arcs (index 0-17)
+        # ========================================================================
+        self.them_o_nhap("xc", "Tâm X (xc):", "300")
+        self.them_o_nhap("yc", "Tâm Y (yc):", "250")
+        self.form_layout.addRow(self.tao_duong_ngan_cach())
+
+        # ========================================================================
         # PHẦN 1: HỌA TIẾT CƠ BẢN
         # ========================================================================
 
@@ -255,8 +262,8 @@ class Chuong1Panel(GraphFunctionPanel):
         try:
             self.canvas.dat_lai_khung_nhin()
 
-            x_tam = round((self.canvas.width() // 2) / 100) * 100
-            y_tam = round((self.canvas.height() // 2) / 100) * 100
+            x_tam = int(self.inputs["xc"].text())
+            y_tam = int(self.inputs["yc"].text())
 
             index = self.list_yeu_cau.currentRow()
             pixels = []

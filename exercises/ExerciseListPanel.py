@@ -2,8 +2,8 @@
 import os
 import sys
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, 
-                             QLabel, QPushButton, QScrollArea, QGraphicsDropShadowEffect, QSpacerItem, QSizePolicy)
-from PyQt6.QtGui import QColor
+                             QLabel, QPushButton, QScrollArea, QGraphicsDropShadowEffect, QSpacerItem, QSizePolicy, QMessageBox)
+from PyQt6.QtGui import QColor, QMouseEvent
 from PyQt6.QtCore import Qt
 
 class ExerciseListPanel(QWidget):
@@ -78,7 +78,8 @@ class ExerciseListPanel(QWidget):
         # 4. KHỞI TẠO THÀNH PHẦN AUTHOR Ở GÓC DƯỚI
         self.lbl_author = QLabel("Developed by Kousujo")
         self.lbl_author.setObjectName("lbl_author")
-        
+        self.lbl_author.mousePressEvent = self.hien_thi_thong_tin_tac_gia
+
         # Tạo một Layout ngang phụ để đẩy chữ Author về góc phải đáy
         self.layout_day = QHBoxLayout()
         self.layout_day.addStretch()
@@ -101,7 +102,7 @@ class ExerciseListPanel(QWidget):
             goc_du_lieu = os.path.dirname(thu_muc_hien_tai)
 
         # Nối chuỗi chính xác đến file ảnh nằm trong folder 'asset' và sửa dấu gạch chéo cho CSS
-        duong_dan_anh_nen = os.path.join(goc_du_lieu, "asset", "neon2.jpg").replace("\\", "/")
+        duong_dan_anh_nen = os.path.join(goc_du_lieu, "asset", "background.jpg").replace("\\", "/")
 
         self.setStyleSheet(f"""
             /* Hình nền tổng thể sử dụng đường dẫn động */
@@ -171,6 +172,12 @@ class ExerciseListPanel(QWidget):
                 color: #00f0ff;
             }}
         """)
+
+    def hien_thi_thong_tin_tac_gia(self, ev: QMouseEvent | None):  # type: ignore[override]
+        QMessageBox.about(self, "Thông tin tác giả",
+            "<p style='font-size:16pt; line-height:2;'>"
+            "<b>Tên:</b> Ưng Nguyễn Tiến Thành (Kousujo)<br>"
+            "<b>Lớp:</b> 25CNTT2</p>")
 
     def xu_ly_vao_bai(self, ten_man_hinh):
         self.mainframe.showScreen(ten_man_hinh)
