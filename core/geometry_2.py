@@ -8,14 +8,12 @@
 #   get_*_fill_pixels_animated(...) → generator (animated)
 
 import math
-from core.algorithms import flood_fill
-
 
 # ==============================================================================
 # HÌNH TRÒN — 3 thuật toán tô
 # ==============================================================================
 
-def _circle_fill_to_san(xc: int, yc: int, R: int, color_tuple=(3, 105, 161)):
+def _circle_fill(xc: int, yc: int, R: int, color_tuple=(3, 105, 161)):
     """Tô sẵn: duyệt bounding box, kiểm tra pt đường tròn."""
     if R <= 0:
         return []
@@ -41,7 +39,7 @@ def _circle_fill_scanline(xc: int, yc: int, R: int,
         yield row
 
 
-def _circle_fill_loang(xc: int, yc: int, R: int,
+def _circle_fill_flood(xc: int, yc: int, R: int,
                        color_tuple=(3, 105, 161), batch_size=300):
     """Generator: yield từng batch BFS từ tâm hình tròn."""
     if R <= 0:
@@ -56,8 +54,9 @@ def _circle_fill_loang(xc: int, yc: int, R: int,
 
 
 _CIRCLE_FILL_ALGORITHMS = {
+    "to_san":   _circle_fill,
     "scanline": _circle_fill_scanline,
-    "loang":    _circle_fill_loang,
+    "loang":    _circle_fill_flood,
 }
 
 
@@ -71,7 +70,7 @@ def get_circle_fill_pixels(xc: int, yc: int, R: int,
     func = _CIRCLE_FILL_ALGORITHMS.get(algorithm)
     if func is None:
         print(f"Lỗi: Thuật toán '{algorithm}' không có animation. Dùng 'loang' thay thế.")
-        func = _circle_fill_loang
+        func = _circle_fill_flood
     # ponytail: scanline không nhận batch_size, loang thì có
     if algorithm == "scanline":
         yield from func(xc, yc, R, color_tuple)
@@ -83,7 +82,7 @@ def get_circle_fill_pixels(xc: int, yc: int, R: int,
 # HÌNH ELLIPSE — 3 thuật toán tô
 # ==============================================================================
 
-def _ellipse_fill_to_san(xc: int, yc: int, a: int, b: int, color_tuple=(16, 185, 129)) -> list:
+def _ellipse_fill(xc: int, yc: int, a: int, b: int, color_tuple=(16, 185, 129)) -> list:
     """Tô sẵn: duyệt bounding box, kiểm tra pt ellipse."""
     if a <= 0 or b <= 0:
         return []
@@ -111,7 +110,7 @@ def _ellipse_fill_scanline(xc: int, yc: int, a: int, b: int,
         yield row
 
 
-def _ellipse_fill_loang(xc: int, yc: int, a: int, b: int,
+def _ellipse_fill_flood(xc: int, yc: int, a: int, b: int,
                         color_tuple=(16, 185, 129), batch_size=300):
     """Generator: yield từng batch BFS từ tâm ellipse."""
     if a <= 0 or b <= 0:
@@ -127,8 +126,9 @@ def _ellipse_fill_loang(xc: int, yc: int, a: int, b: int,
 
 
 _ELLIPSE_FILL_ALGORITHMS = {
+    "to_san":   _ellipse_fill,
     "scanline": _ellipse_fill_scanline,
-    "loang":    _ellipse_fill_loang,
+    "loang":    _ellipse_fill_flood,
 }
 
 
@@ -142,7 +142,7 @@ def get_ellipse_fill_pixels(xc: int, yc: int, a: int, b: int,
     func = _ELLIPSE_FILL_ALGORITHMS.get(algorithm)
     if func is None:
         print(f"Lỗi: Thuật toán '{algorithm}' không có animation. Dùng 'loang' thay thế.")
-        func = _ellipse_fill_loang
+        func = _ellipse_fill_flood
     if algorithm == "scanline":
         yield from func(xc, yc, a, b, color_tuple)
     else:

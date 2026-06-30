@@ -36,3 +36,20 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
 - Every task completion plan must start with calling `codegraph_explore` to gather initial context. Do not bypass this rule.
 - Inside this specific project, you must ALWAYS pass the exact `projectPath` parameter whenever you execute the `codegraph_explore` tool.
 - Use this absolute path for the `projectPath` parameter: "D:/VScode/Menu-Computer-Graphic"
+
+# EXTENDED SKILLS ROUTER
+
+You possess specialized, context-dependent skills stored as Markdown files inside the `./skills/` directory. To optimize token budget and maximize context focus, DO NOT load these skills simultaneously. 
+
+Analyze the incoming task objective, and use your file-reading tool to load the exact skill file ONLY when the specific context is triggered:
+
+1. SKILL: SURGICAL CODING & BEHAVIORAL CAUTION
+   - Trigger Context: When the user asks to "Refactor code", "Fix a complex bug", "Analyze system architecture", or when you need to simplify overcomplicated logic.
+   - Action: Read `./skills/karpathy-method.md` to enforce surgical changes, strict success criteria validation, and the "Think Before Coding" protocol.
+
+2. SKILL: VOLTAGENT DESIGN EXPERT
+   - Trigger Context: When the user asks for front-end implementation, PyQt6/UI layout design, dark-mode styling, component structuring, or color-palette configuration.
+   - Action: Read `./skills/DESIGN-voltagent.md` to strictly apply the Electric Green (#00d992) accent system, Canvas near-black (#101010) surfaces, and Inter/SF Mono typography hierarchy.
+
+Whenever you dynamically load a skill from `./skills/`, prefix your very first response with this exact system log:
+"🤖 [System]: Activated extended skill: [Skill Name] for this task context."

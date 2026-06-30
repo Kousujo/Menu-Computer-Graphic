@@ -8,7 +8,7 @@ class MainFrame(QMainWindow):
         self.setWindowTitle("Hệ Thống Thực Hành Đồ Họa Máy Tính")
         
         # Đặt kích thước cửa sổ
-        self.resize(1200, 700)
+        self.resize(1280, 720)
         self.can_giua_man_hinh()
 
         # CardLayout quản lý tập trung các màn hình giao diện
