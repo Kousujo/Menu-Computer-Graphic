@@ -47,9 +47,17 @@ Analyze the incoming task objective, and use your file-reading tool to load the 
    - Trigger Context: When the user asks to "Refactor code", "Fix a complex bug", "Analyze system architecture", or when you need to simplify overcomplicated logic.
    - Action: Read `./skills/karpathy-method.md` to enforce surgical changes, strict success criteria validation, and the "Think Before Coding" protocol.
 
-2. SKILL: VOLTAGENT DESIGN EXPERT
-   - Trigger Context: When the user asks for front-end implementation, PyQt6/UI layout design, dark-mode styling, component structuring, or color-palette configuration.
-   - Action: Read `./skills/DESIGN-voltagent.md` to strictly apply the Electric Green (#00d992) accent system, Canvas near-black (#101010) surfaces, and Inter/SF Mono typography hierarchy.
+2. SKILL: HIGH-END QT6 UI ARCHITECT 
+   - Trigger Context: When the user asks for front-end implementation, PyQt6/UI layout design, dark-mode styling, component structuring, color-palette configuration, animations, or UI overhauls.
+   - Action: You MUST dynamically load and read THREE exact skill files: 
+     1. `./skills/DESIGN-voltagent.md` (to pull the strict Electric Green `#00d992` and Canvas near-black `#101010` palette tokens).
+     2. `./skills/high-end-visual-design.md` (to enforce elite macro-whitespace padding, Double-Bezel nested structures, and anti-slop visual layout rhythm).
+     3. `./skills/qt-ui-design.md` (to execute official Qt native animation performance budgets, GPU-safe transitions, and prevent layout reflow micro-stuttering).
+   - Strict Constraint: You are absolutely forbidden from outputting HTML or Tailwind utility strings (`className`, `shadow-md`, `w-1/2`). Translate all web aesthetic intents 1:1 into pure, high-performance Python PyQt6 widgets and QSS templates consolidated inside `styles/voltagent_styles.py`.
+
+3. SKILL: PROMPT ARCHITECT & TOOL REPAIR
+   - Trigger Context: When the user wants to optimize/design prompts, OR when you encounter an MCP tool execution error / invalid JSON string error.
+   - Action: Read `./skills/prompt-architect.md` to format engineered prompts and immediately correct your internal tool invocation behavior.
 
 Whenever you dynamically load a skill from `./skills/`, prefix your very first response with this exact system log:
 "🤖 [System]: Activated extended skill: [Skill Name] for this task context."

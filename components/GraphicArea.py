@@ -2,11 +2,12 @@
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import Qt, QPointF, QPoint, QTimer
 from PyQt6.QtGui import QPainter, QColor, QPen, QTransform
+from styles.voltagent_styles import Color, qss_canvas
 
 class GraphicArea(QWidget):
     def __init__(self):
         super().__init__()
-        self.setStyleSheet("background-color: #ffffff; border: 2px solid #e0e0e0; border-radius: 8px;")
+        self.setStyleSheet(qss_canvas())
         self.danh_sach_pixel = []
         
         self.he_so_zoom = 1.0
@@ -71,7 +72,7 @@ class GraphicArea(QWidget):
         # =================================================================
         # VẼ LƯỚI TỌA ĐỘ
         # =================================================================
-        but_luoi = QPen(QColor("#cbd5e1"), 1, Qt.PenStyle.DashLine)
+        but_luoi = QPen(QColor(Color.HAIRLINE), 1, Qt.PenStyle.DashLine)
         painter.setPen(but_luoi)
 
         khoang_cach_o_luoi = 100
@@ -86,7 +87,7 @@ class GraphicArea(QWidget):
             painter.drawLine(-gioi_han_ao, y, gioi_han_ao, y)
             
         # Trục gốc (0,0) làm đậm hẳn lên để làm mốc tọa độ chính
-        but_truc_goc = QPen(QColor("#94a3b8"), 1.5, Qt.PenStyle.SolidLine)
+        but_truc_goc = QPen(QColor(Color.MUTE), 1.5, Qt.PenStyle.SolidLine)
         painter.setPen(but_truc_goc)
         painter.drawLine(0, -gioi_han_ao, 0, gioi_han_ao)
         painter.drawLine(-gioi_han_ao, 0, gioi_han_ao, 0)
@@ -95,7 +96,7 @@ class GraphicArea(QWidget):
         # VẼ HÌNH CHÍNH (Xử lý tương thích cả 2 định dạng)
         # =================================================================
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
-        but_mac_dinh = QPen(QColor("#1e293b"), 3)
+        but_mac_dinh = QPen(QColor(Color.INK), 2)
         painter.setPen(but_mac_dinh)
         
         # Vẽ fill (3-tuple) trước — màu tô

@@ -1,6 +1,7 @@
 # components/GraphFunctionPanel.py
 from components.BaseGraphicPanel import BaseGraphicPanel
 from PyQt6.QtWidgets import QPushButton, QHBoxLayout
+from styles.voltagent_styles import qss_button_primary, qss_button_ghost_green
 
 class GraphFunctionPanel(BaseGraphicPanel):
     def __init__(self, mainframe, title_sidebar="KHẢO SÁT HÀM SỐ"):
@@ -17,27 +18,11 @@ class GraphFunctionPanel(BaseGraphicPanel):
         
         self.btn_khao_sat = QPushButton("KHẢO SÁT")
         self.btn_khao_sat.setFixedHeight(46)
-        self.btn_khao_sat.setStyleSheet("""
-            QPushButton {
-                font-weight: 800; font-size: 10pt; letter-spacing: 0.5px;
-                border: None; border-radius: 6px;
-                background-color: #10b981; color: #ffffff; /* Màu xanh lá đặc trưng cho khảo sát */
-            }
-            QPushButton:hover { background-color: #059669; }
-            QPushButton:pressed { background-color: #047857; }
-        """)
+        self.btn_khao_sat.setStyleSheet(qss_button_ghost_green())
         
         self.btn_ve_hinh_moi = QPushButton("VẼ ĐỒ THỊ")
         self.btn_ve_hinh_moi.setFixedHeight(46)
-        self.btn_ve_hinh_moi.setStyleSheet("""
-            QPushButton {
-                font-weight: 800; font-size: 10pt; letter-spacing: 0.5px;
-                border: None; border-radius: 6px;
-                background-color: #0ea5e9; color: #ffffff;
-            }
-            QPushButton:hover { background-color: #0284c7; }
-            QPushButton:pressed { background-color: #0369a1; }
-        """)
+        self.btn_ve_hinh_moi.setStyleSheet(qss_button_primary())
         
         layout_hang_nut = QHBoxLayout()
         layout_hang_nut.setSpacing(8)

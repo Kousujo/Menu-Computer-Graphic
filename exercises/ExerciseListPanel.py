@@ -1,183 +1,332 @@
 # exercises/ExerciseListPanel.py
-import os
-import sys
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, 
-                             QLabel, QPushButton, QScrollArea, QGraphicsDropShadowEffect, QSpacerItem, QSizePolicy, QMessageBox)
-from PyQt6.QtGui import QColor, QMouseEvent
+# ponytail: centralized QSS only, no inline styles. Layout follows MARGIN=24, SPACING=16.
+
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
+    QLabel, QPushButton, QFrame, QMessageBox,
+    QGraphicsDropShadowEffect,
+)
+from PyQt6.QtGui import QMouseEvent, QColor
 from PyQt6.QtCore import Qt
+from styles.voltagent_styles import (
+    Color, MARGIN, SPACING,
+    qss_button_secondary, qss_card_feature,
+    qss_label_eyebrow, qss_label_title, qss_label_body,
+    qss_divider, qss_container_panel, qss_container_inner,
+)
+
+
+# ─── Chapter metadata ────────────────────────────────────────────────────────
+
+_CHAPTERS = [
+    # (index, title, subtitle, algo_line, emoji, enabled)
+    (1, "CÁC YẾU TỐ CƠ SỞ CỦA ĐỒ HỌA",
+     "Thuật toán: DDA, Bresenham, Circle, Oval...", "📐", True),
+    (2, "TÔ MÀU",
+     "Flood Fill, Scanline", "🎨", True),
+    (3, "BIẾN ĐỔI ĐỒ HỌA 2D",
+     "Translation, Rotation, Scaling", "🔄", False),
+    (4, "BIẾN ĐỔI 3D & PROJECTION",
+     "3D Transform, Perspective", "🧊", False),
+    (5, "QUAN SÁT ĐỒ HỌA 3D",
+     "Camera, Viewport", "👁️", False),
+    (6, "ĐƯỜNG CONG & MẶT CONG",
+     "Bezier, B-Spline, Surface", "📈", False),
+    (7, "KHỬ CHE KHUẤT",
+     "Z-Buffer, Painter", "🔲", False),
+]
+
+_LOCKED_SUFFIX = "  🔒"
+_CHAPTER_SCREEN_NAMES = [
+    "Chuong_1", "Chuong_2", "Chuong_3", "Chuong_4",
+    "Chuong_5", "Chuong_6", "Chuong_7",
+]
+
+
+# ─── Double-Bezel card builder ───────────────────────────────────────────────
+
+def _build_chapter_card(
+    index: int,
+    title: str,
+    subtitle: str,
+    emoji: str,
+    enabled: bool,
+    on_click,
+) -> QFrame:
+    """Build a chapter card using the Double-Bezel nested container pattern.
+
+    Outer tray (qss_container_panel -> #containerPanel) wraps an inner core
+    (qss_container_inner -> #containerInner) that holds the actual content.
+    """
+    tray = QFrame()
+    tray.setObjectName("containerPanel")
+    tray.setStyleSheet(qss_container_panel())
+    tray_layout = QVBoxLayout(tray)
+    tray_layout.setContentsMargins(8, 8, 8, 8)
+
+    core = QFrame()
+    core.setObjectName("containerInner")
+    core.setStyleSheet(qss_container_inner())
+    core_layout = QVBoxLayout(core)
+    core_layout.setContentsMargins(16, 14, 16, 14)
+    core_layout.setSpacing(4)
+
+    # Row 1: emoji + eyebrow number
+    header_row = QHBoxLayout()
+    header_row.setContentsMargins(0, 0, 0, 0)
+    header_row.setSpacing(8)
+
+    lbl_emoji = QLabel(emoji)
+    lbl_emoji.setStyleSheet("font-size: 20px; background: transparent; border: none;")
+    header_row.addWidget(lbl_emoji)
+
+    lbl_number = QLabel(f"CHƯƠNG {index}")
+    lbl_number.setStyleSheet(qss_label_eyebrow())
+    header_row.addWidget(lbl_number)
+    header_row.addStretch()
+
+    # Lock indicator for disabled chapters
+    if not enabled:
+        lbl_lock = QLabel("🔒")
+        lbl_lock.setStyleSheet("font-size: 14px; background: transparent; border: none;")
+        header_row.addWidget(lbl_lock)
+
+    core_layout.addLayout(header_row)
+
+    # Row 2: title
+    display_title = title + (_LOCKED_SUFFIX if not enabled else "")
+    lbl_title = QLabel(display_title)
+    lbl_title.setStyleSheet(qss_label_title())
+    lbl_title.setWordWrap(True)
+    core_layout.addWidget(lbl_title)
+
+    # Row 3: subtitle / algorithms list
+    lbl_sub = QLabel(subtitle)
+    lbl_sub.setStyleSheet(qss_label_body())
+    lbl_sub.setWordWrap(True)
+    core_layout.addWidget(lbl_sub)
+
+    tray_layout.addWidget(core)
+
+    # Shadow for enabled cards (premium depth)
+    if enabled:
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(20)
+        shadow.setColor(QColor(0, 0, 0, 120))
+        shadow.setOffset(0, 4)
+        tray.setGraphicsEffect(shadow)
+
+    # Click handler
+    if enabled:
+        def _on_card_click(a0, idx=index):
+            on_click(idx)
+        tray.mousePressEvent = _on_card_click
+
+    # Reduce opacity for locked chapters
+    if not enabled:
+        core.setStyleSheet(
+            qss_container_inner().replace(
+                "background-color: #1a1a1a;",
+                "background-color: #1a1a1a; opacity: 0.55;"
+            )
+        )
+
+    return tray
+
+
+def _build_utility_card() -> QFrame:
+    """Utilities card — Double-Bezel with two action buttons."""
+    tray = QFrame()
+    tray.setObjectName("containerPanel")
+    tray.setStyleSheet(qss_container_panel())
+    tray_layout = QVBoxLayout(tray)
+    tray_layout.setContentsMargins(8, 8, 8, 8)
+
+    core = QFrame()
+    core.setObjectName("containerInner")
+    core.setStyleSheet(qss_container_inner())
+    core_layout = QVBoxLayout(core)
+    core_layout.setContentsMargins(16, 14, 16, 14)
+    core_layout.setSpacing(10)
+
+    lbl_util = QLabel("TIỆN ÍCH")
+    lbl_util.setStyleSheet(qss_label_eyebrow())
+    core_layout.addWidget(lbl_util)
+
+    btn_docs = QPushButton("📖  Open Documentation")
+    btn_docs.setStyleSheet(qss_button_secondary())
+    btn_docs.setCursor(Qt.CursorShape.PointingHandCursor)
+    core_layout.addWidget(btn_docs)
+
+    btn_reset = QPushButton("🧹  Reset System Canvas")
+    btn_reset.setStyleSheet(qss_button_secondary())
+    btn_reset.setCursor(Qt.CursorShape.PointingHandCursor)
+    core_layout.addWidget(btn_reset)
+
+    tray_layout.addWidget(core)
+    return tray
+
+
+def _build_info_card() -> QFrame:
+    """Author info card — Double-Bezel with status labels."""
+    tray = QFrame()
+    tray.setObjectName("containerPanel")
+    tray.setStyleSheet(qss_container_panel())
+    tray_layout = QVBoxLayout(tray)
+    tray_layout.setContentsMargins(8, 8, 8, 8)
+
+    core = QFrame()
+    core.setObjectName("containerInner")
+    core.setStyleSheet(qss_container_inner())
+    core_layout = QVBoxLayout(core)
+    core_layout.setContentsMargins(16, 14, 16, 14)
+    core_layout.setSpacing(6)
+
+    lbl_info = QLabel("THÔNG TIN")
+    lbl_info.setStyleSheet(qss_label_eyebrow())
+    core_layout.addWidget(lbl_info)
+
+    items = [
+        ("📚", "Course: Computer Graphics"),
+        ("👤", "Developer: Kousujo"),
+    ]
+    for icon, text in items:
+        row = QHBoxLayout()
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(8)
+        lbl_icon = QLabel(icon)
+        lbl_icon.setStyleSheet("font-size: 14px; background: transparent; border: none;")
+        lbl_text = QLabel(text)
+        lbl_text.setStyleSheet(qss_label_body())
+        row.addWidget(lbl_icon)
+        row.addWidget(lbl_text)
+        row.addStretch()
+        core_layout.addLayout(row)
+
+    # Status row with green dot
+    status_row = QHBoxLayout()
+    status_row.setContentsMargins(0, 0, 0, 0)
+    status_row.setSpacing(8)
+    lbl_dot = QLabel("●")
+    lbl_dot.setStyleSheet(
+        f"font-size: 12px; color: {Color.SUCCESS}; background: transparent; border: none;"
+    )
+    lbl_status = QLabel("System Status: Active")
+    lbl_status.setStyleSheet(f"font-size: 10pt; color: {Color.SUCCESS}; background: transparent; border: none;")
+    status_row.addWidget(lbl_dot)
+    status_row.addWidget(lbl_status)
+    status_row.addStretch()
+    core_layout.addLayout(status_row)
+
+    tray_layout.addWidget(core)
+    return tray
+
+
+# ─── Main Panel ──────────────────────────────────────────────────────────────
 
 class ExerciseListPanel(QWidget):
+    """Main menu — asymmetrical grid of chapter cards + right sidebar."""
+
     def __init__(self, mainframe):
         super().__init__()
         self.mainframe = mainframe
+
         self.setObjectName("ExerciseListPanel")
-        
-        # Thiết lập nền tổng thể (Hỗ trợ nạp StyledBackground cho QWidget)
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        
-        # 1. KHỞI TẠO LAYOUT CHÍNH (QVBoxLayout)
-        self.main_layout = QVBoxLayout(self)
-        self.main_layout.setContentsMargins(10, 100, 10, 10)  # Giữ nguyên topMargin 100 từ file .ui
-        self.main_layout.setSpacing(30)
+        self.setStyleSheet(f"background-color: {Color.CANVAS};")
 
-        # 2. KHỞI TẠO THÀNH PHẦN HEADER
-        self.lbl_header = QLabel()
-        self.lbl_header.setObjectName("lbl_header")
-        # Sử dụng chuỗi HTML kết hợp text-shadow neon nguyên bản của bạn
-        self.lbl_header.setText(
-            '<p align="center"><span style="font-family:\'Montserrat\', \'Segoe UI\'; '
-            'font-size:42pt; font-weight:bold; color:#ffffff; '
-            'text-shadow: 0 0 5px #fff, 0 0 10px #ff0055, 0 0 20px #ff0055, 0 0 40px #ff0055;">'
-            'DANH SÁCH BÀI TẬP</span></p>'
+        # ── Root layout ──────────────────────────────────────────────────
+        root = QVBoxLayout(self)
+        root.setContentsMargins(MARGIN, MARGIN, MARGIN, MARGIN)
+        root.setSpacing(SPACING)
+
+        # ── 1. Header ─────────────────────────────────────────────────────
+        lbl_header = QLabel("ĐỒ HỌA MÁY TÍNH")
+        lbl_header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lbl_header.setStyleSheet(
+            f"font-weight: 700; font-size: 32px; letter-spacing: 1px; "
+            f"color: {Color.INK_STRONG}; background: transparent; border: none; "
+            f"padding: 12px 0px;"
         )
-        self.lbl_header.setMargin(10)
-        
-        # Hiệu ứng đổ bóng lớp phụ (Neon DropShadow) cho tiêu đề
-        hieu_ung_neon = QGraphicsDropShadowEffect(self)
-        hieu_ung_neon.setBlurRadius(25)
-        hieu_ung_neon.setColor(QColor("#ff0055"))
-        hieu_ung_neon.setOffset(0, 0)
-        self.lbl_header.setGraphicsEffect(hieu_ung_neon)
-        
-        # Đưa Header vào layout chính, căn giữa theo chiều ngang
-        self.main_layout.addWidget(self.lbl_header, alignment=Qt.AlignmentFlag.AlignHCenter)
+        root.addWidget(lbl_header)
 
-        # 3. KHỞI TẠO VÙNG CUỘN (QScrollArea)
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setObjectName("scrollArea")
-        self.scroll_area.setWidgetResizable(True)
-        
-        # Widget nội dung bên trong vùng cuộn
-        self.scroll_widget = QWidget()
-        self.scroll_widget.setObjectName("scrollAreaWidgetContents")
-        
-        # Grid Layout quản lý các nút bấm bài tập
-        self.grid_layout = QGridLayout(self.scroll_widget)
-        self.grid_layout.setContentsMargins(40, 0, 40, 0) # leftMargin và rightMargin là 40
-        
-        # Tạo Spacer 2 bên để ép các nút bấm gom vào cột giữa cân đối
-        self.spacer_trai = QSpacerItem(80, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
-        self.spacer_phai = QSpacerItem(80, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
-        self.grid_layout.addItem(self.spacer_trai, 3, 0)
-        self.grid_layout.addItem(self.spacer_phai, 3, 2)
+        # ── 2. Body: Left chapters + Right sidebar ─────────────────────────
+        body = QHBoxLayout()
+        body.setContentsMargins(0, 0, 0, 0)
+        body.setSpacing(SPACING)
 
-        # Khởi tạo các nút chương mới
-        self.btn_chuong1 = QPushButton("CHƯƠNG 1: CÁC YẾU TỐ CƠ SỞ CỦA ĐỒ HỌA")
-        self.btn_chuong1.setObjectName("btn_chuong1")
-        self.btn_chuong1.clicked.connect(lambda: self.xu_ly_vao_bai("Chuong_1"))
-        self.grid_layout.addWidget(self.btn_chuong1, 3, 1) # Hàng 3, Cột 1
+        # ---- 2a. Left: Chapter grid (4 rows, 2 columns) -------------------
+        ch_layout = QGridLayout()
+        ch_layout.setContentsMargins(0, 0, 0, 0)
+        ch_layout.setSpacing(12)
 
-        self.btn_chuong2 = QPushButton("CHƯƠNG 2: TÔ MÀU")
-        self.btn_chuong2.setObjectName("btn_chuong2")
-        self.btn_chuong2.clicked.connect(lambda: self.xu_ly_vao_bai("Chuong_2"))
-        self.grid_layout.addWidget(self.btn_chuong2, 4, 1) # Hàng 4, Cột 1    
+        for i, (index, title, subtitle, emoji, enabled) in enumerate(_CHAPTERS):
+            card = _build_chapter_card(
+                index, title, subtitle, emoji, enabled,
+                on_click=self._on_chapter_click,
+            )
+            if index == 1:
+                # Chapter 1: full-width row
+                ch_layout.addWidget(card, 0, 0, 1, 2)
+            else:
+                # Others: pair in rows 1-3, columns 0-1
+                row = 1 + (index - 2) // 2
+                col = (index - 2) % 2
+                ch_layout.addWidget(card, row, col)
 
-        self.scroll_area.setWidget(self.scroll_widget)
-        self.main_layout.addWidget(self.scroll_area)
+        ch_layout.setRowStretch(0, 0)  # Ch1 auto
+        ch_layout.setRowStretch(1, 1)
+        ch_layout.setRowStretch(2, 1)
+        ch_layout.setRowStretch(3, 1)
+        ch_layout.setColumnStretch(0, 1)
+        ch_layout.setColumnStretch(1, 1)
 
-        # 4. KHỞI TẠO THÀNH PHẦN AUTHOR Ở GÓC DƯỚI
+        # Wrap chapter grid in a container widget
+        ch_widget = QWidget()
+        ch_widget.setLayout(ch_layout)
+        ch_widget.setStyleSheet("background: transparent; border: none;")
+        body.addWidget(ch_widget, stretch=3)
+
+        # ---- 2b. Right: Sidebar (fixed 300px) -----------------------------
+        sidebar = QVBoxLayout()
+        sidebar.setContentsMargins(0, 0, 0, 0)
+        sidebar.setSpacing(SPACING)
+
+        sidebar.addWidget(_build_utility_card())
+        sidebar.addWidget(_build_info_card())
+        sidebar.addStretch()
+
+        sb_widget = QWidget()
+        sb_widget.setFixedWidth(300)
+        sb_widget.setLayout(sidebar)
+        sb_widget.setStyleSheet("background: transparent; border: none;")
+        body.addWidget(sb_widget, stretch=0)
+
+        root.addLayout(body, stretch=1)
+
+        # ── 3. Footer: Author label (right-aligned) ────────────────────────
+        footer = QHBoxLayout()
+        footer.setContentsMargins(0, 0, 0, 0)
+        footer.addStretch()
+
         self.lbl_author = QLabel("Developed by Kousujo")
         self.lbl_author.setObjectName("lbl_author")
-        self.lbl_author.mousePressEvent = self.hien_thi_thong_tin_tac_gia
+        self.lbl_author.setStyleSheet(qss_label_body())
+        self.lbl_author.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.lbl_author.mousePressEvent = self._show_author_info
+        footer.addWidget(self.lbl_author)
 
-        # Tạo một Layout ngang phụ để đẩy chữ Author về góc phải đáy
-        self.layout_day = QHBoxLayout()
-        self.layout_day.addStretch()
-        self.layout_day.addWidget(self.lbl_author)
-        self.main_layout.addLayout(self.layout_day)
+        root.addLayout(footer)
 
-        # 5. THIẾT LẬP STYLESHEET CHUẨN HOÀN TOÀN
-        self.thiet_lap_stylesheets()
+    # ── Handlers ─────────────────────────────────────────────────────────────
 
-    def thiet_lap_stylesheets(self):
-        # -----------------------------------------------------------------
-        # XỬ LÝ ĐƯỜNG DẪN ẢNH NỀN TƯƠNG THÍCH CHO CẢ .PY VÀ .EXE
-        # -----------------------------------------------------------------
-        if hasattr(sys, '_MEIPASS'):
-            # Khi chạy từ file .exe độc lập, PyInstaller giải nén tài nguyên vào thư mục tạm này
-            goc_du_lieu = sys._MEIPASS # type: ignore
-        else:
-            # Khi chạy dev bằng file .py thông thường, quay ngược lên thư mục gốc dự án
-            thu_muc_hien_tai = os.path.dirname(os.path.abspath(__file__))
-            goc_du_lieu = os.path.dirname(thu_muc_hien_tai)
+    def _on_chapter_click(self, index: int) -> None:
+        """Navigate to the chapter screen."""
+        screen_name = _CHAPTER_SCREEN_NAMES[index - 1]
+        self.mainframe.showScreen(screen_name)
 
-        # Nối chuỗi chính xác đến file ảnh nằm trong folder 'asset' và sửa dấu gạch chéo cho CSS
-        duong_dan_anh_nen = os.path.join(goc_du_lieu, "asset", "background.jpg").replace("\\", "/")
-
-        self.setStyleSheet(f"""
-            /* Hình nền tổng thể sử dụng đường dẫn động */
-            #ExerciseListPanel {{
-                background-image: url("{duong_dan_anh_nen}");
-                background-position: center;
-                background-repeat: no-repeat;
-            }}
-
-            /* Vùng cuộn trong suốt */
-            QScrollArea {{
-                background-color: transparent;
-                border: none;
-            }}
-            #scrollAreaWidgetContents {{
-                background-color: transparent;
-            }}
-
-            /* Thanh cuộn mượt mà phong cách Cyberpunk */
-            QScrollBar:vertical {{
-                background: #0f111a;
-                width: 8px;
-                border-radius: 4px;
-            }}
-            QScrollBar::handle:vertical {{
-                background: #ff0055;
-                border-radius: 4px;
-            }}
-            QScrollBar::handle:vertical:hover {{
-                background: #00f0ff;
-            }}
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
-                border: none; background: none;
-            }}
-
-            /* Phong cách nút bấm Neon mượt mà */
-            QPushButton {{
-                background-color: #161925;
-                color: #00f0ff; 
-                font-family: 'Segoe UI', sans-serif;
-                font-size: 15pt;
-                font-weight: bold;
-                border: 2px solid #00f0ff;
-                border-radius: 10px;
-                padding: 15px;
-                margin-bottom: 12px; 
-            }}
-            QPushButton:hover {{
-                color: #ffffff;
-                background-color: #ff0055; 
-                border: 2px solid #ffffff; 
-            }}
-            QPushButton:pressed {{
-                background-color: #9d00ff;
-                border: 2px solid #9d00ff;
-            }}
-
-            /* Chữ Author tinh tế ở góc đáy */
-            #lbl_author {{
-                font-family: 'Segoe UI', sans-serif;
-                font-size: 15pt;
-                font-weight: bold;
-                color: #626880;
-                letter-spacing: 1px;
-            }}
-            #lbl_author:hover {{
-                color: #00f0ff;
-            }}
-        """)
-
-    def hien_thi_thong_tin_tac_gia(self, ev: QMouseEvent | None):  # type: ignore[override]
+    def _show_author_info(self, ev: QMouseEvent | None) -> None:  # type: ignore[override]
         QMessageBox.about(self, "Thông tin tác giả",
             "<p style='font-size:16pt; line-height:2;'>"
             "<b>Tên:</b> Ưng Nguyễn Tiến Thành (Kousujo)<br>"
             "<b>Lớp:</b> 25CNTT2</p>")
-
-    def xu_ly_vao_bai(self, ten_man_hinh):
-        self.mainframe.showScreen(ten_man_hinh)

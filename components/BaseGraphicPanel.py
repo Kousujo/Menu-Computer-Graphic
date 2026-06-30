@@ -3,8 +3,11 @@ from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QFrame,
                               QPushButton, QLabel, QListWidget, QFormLayout,
                               QScrollArea)
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
 from components.GraphicArea import GraphicArea
+from styles.voltagent_styles import (Color, qss_panel_input_overlay,
+                                     qss_sidebar, qss_list_widget, qss_button_primary,
+                                     qss_button_secondary, qss_label_eyebrow,
+                                     qss_divider)
 
 _PANEL_CHIEU_CAO_CO_DINH = 260  # ponytail: đủ cho ~6-7 input, nếu dài hơn thì scroll
 
@@ -13,10 +16,7 @@ class BaseGraphicPanel(QWidget):
     def __init__(self, mainframe, title_sidebar="DANH SÁCH YÊU CẦU"):
         super().__init__()
         self.mainframe = mainframe
-
-        self.font_chu_he_thong = QFont("Segoe UI", 14)
-        self.setFont(self.font_chu_he_thong)
-        self.setStyleSheet("background-color: #f8fafc;")
+        self.setStyleSheet(f"background-color: {Color.CANVAS};")
 
         layout_tong = QHBoxLayout(self)
         layout_tong.setContentsMargins(10, 10, 10, 10)
@@ -35,65 +35,14 @@ class BaseGraphicPanel(QWidget):
         self.panel_nhap_lieu = QFrame(self.canvas)
         self.panel_nhap_lieu.setAutoFillBackground(True)
         self.panel_nhap_lieu.setGeometry(20, 20, 340, 50)
-        self.panel_nhap_lieu.setStyleSheet("""
-            QFrame#PanelNoi {
-                background-color: #1e293b;
-                border: 1px solid #334155;
-                border-radius: 8px;
-            }
-            QLabel {
-                color: #f1f5f9;
-                font-size: 10pt;
-                font-weight: 600;
-                border: none;
-                background: transparent;
-            }
-            QLineEdit {
-                background-color: #334155;
-                color: #38bdf8;
-                border: 1px solid #475569;
-                border-radius: 4px;
-                padding: 6px;
-                min-height: 25px;
-                font-size: 11pt;
-                font-weight: bold;
-            }
-            QLineEdit:focus {
-                border: 1px solid #38bdf8;
-            }
-            QScrollArea {
-                background: transparent;
-                border: none;
-            }
-            QScrollBar:vertical {
-                background: #1e293b;
-                width: 6px;
-                border: none;
-                border-radius: 3px;
-            }
-            QScrollBar::handle:vertical {
-                background: #475569;
-                border-radius: 3px;
-                min-height: 20px;
-            }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                height: 0px;
-            }
-        """)
+        self.panel_nhap_lieu.setStyleSheet(qss_panel_input_overlay())
         self.panel_nhap_lieu.setObjectName("PanelNoi")
 
         layout_noi = QVBoxLayout(self.panel_nhap_lieu)
         layout_noi.setContentsMargins(12, 12, 12, 12)
 
         self.btn_an_hien_form = QPushButton("Thu gọn bảng điều khiển ▲")
-        self.btn_an_hien_form.setStyleSheet("""
-            QPushButton {
-                font-size: 10pt; font-weight: bold; padding: 5px;
-                border: 1px solid #475569; border-radius: 4px;
-                background-color: #334155; color: #cbd5e1;
-            }
-            QPushButton:hover { background-color: #475569; color: #ffffff; }
-        """)
+        self.btn_an_hien_form.setStyleSheet(qss_button_secondary())
         self.btn_an_hien_form.clicked.connect(self.xu_ly_an_hien_panel)
         layout_noi.addWidget(self.btn_an_hien_form)
 
@@ -124,68 +73,31 @@ class BaseGraphicPanel(QWidget):
         # =================================================================
         self.sidebar_phai = QFrame()
         self.sidebar_phai.setFixedWidth(310)
-        self.sidebar_phai.setStyleSheet("""
-            QFrame { background-color: #0f172a; border-radius: 8px; }
-            QLabel { color: #ffffff; border: none; }
-        """)
+        self.sidebar_phai.setStyleSheet(qss_sidebar())
 
         layout_sb = QVBoxLayout(self.sidebar_phai)
         layout_sb.setContentsMargins(18, 20, 18, 20)
 
         self.lbl_sb_title = QLabel(title_sidebar)
-        self.lbl_sb_title.setStyleSheet("font-weight: 800; font-size: 12pt; color: #38bdf8; letter-spacing: 1px;")
+        self.lbl_sb_title.setStyleSheet(qss_label_eyebrow())
         layout_sb.addWidget(self.lbl_sb_title, alignment=Qt.AlignmentFlag.AlignCenter)
         layout_sb.addSpacing(10)
 
         self.list_yeu_cau = QListWidget()
-        self.list_yeu_cau.setStyleSheet("""
-            QListWidget {
-                border: 1px solid #1e293b; border-radius: 6px;
-                background-color: #1e293b; color: #e2e8f0;
-                font-size: 10pt; font-weight: 500; padding: 5px;
-                outline: none;
-            }
-            QListWidget::item {
-                padding: 10px; border-radius: 4px; margin-bottom: 4px;
-            }
-            QListWidget::item:hover {
-                background-color: #334155; color: #38bdf8;
-            }
-            QListWidget::item:selected {
-                background-color: #0284c7; color: #ffffff; font-weight: bold;
-            }
-            QListWidget::focus {
-                border: 1px solid #1e293b;
-            }
-        """)
+        self.list_yeu_cau.setStyleSheet(qss_list_widget())
         layout_sb.addWidget(self.list_yeu_cau)
         layout_sb.addSpacing(15)
 
         self.btn_ve_hinh = QPushButton("KÍCH HOẠT VẼ HÌNH")
         self.btn_ve_hinh.setFixedHeight(46)
-        self.btn_ve_hinh.setStyleSheet("""
-            QPushButton {
-                font-weight: 800; font-size: 10pt; letter-spacing: 0.5px;
-                border: none; border-radius: 6px;
-                background-color: #0ea5e9; color: #ffffff;
-            }
-            QPushButton:hover { background-color: #0284c7; }
-            QPushButton:pressed { background-color: #0369a1; }
-        """)
+        self.btn_ve_hinh.setStyleSheet(qss_button_primary())
         self.btn_ve_hinh.clicked.connect(self.xu_ly_logic_ve)
         layout_sb.addWidget(self.btn_ve_hinh)
         layout_sb.addSpacing(6)
 
         btn_thoat_bai = QPushButton("QUAY LẠI TRANG CHỦ")
         btn_thoat_bai.setFixedHeight(42)
-        btn_thoat_bai.setStyleSheet("""
-            QPushButton {
-                font-weight: 600; font-size: 9pt;
-                border: 1px solid #334155; border-radius: 6px;
-                background-color: #1e293b; color: #94a3b8;
-            }
-            QPushButton:hover { background-color: #334155; color: #f1f5f9; border: 1px solid #475569; }
-        """)
+        btn_thoat_bai.setStyleSheet(qss_button_secondary())
         btn_thoat_bai.clicked.connect(lambda: self.mainframe.showScreen("ExerciseList"))
         layout_sb.addWidget(btn_thoat_bai)
 
@@ -195,7 +107,7 @@ class BaseGraphicPanel(QWidget):
         line = QFrame()
         line.setFrameShape(QFrame.Shape.HLine)
         line.setFrameShadow(QFrame.Shadow.Plain)
-        line.setStyleSheet("color: #334155; background-color: #334155; max-height: 1px; border: none; margin: 2px 0px;")
+        line.setStyleSheet(qss_divider())
         return line
 
     def xoa_toan_bo_input(self):

@@ -1,16 +1,18 @@
 import sys
 from PyQt6.QtWidgets import QMainWindow, QStackedWidget, QApplication
+from styles.voltagent_styles import Color
 
 
 class MainFrame(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Hệ Thống Thực Hành Đồ Họa Máy Tính")
+        self.setStyleSheet(f"background-color: {Color.CANVAS};")
         
         # Đặt kích thước cửa sổ
         self.resize(1280, 720)
         self.can_giua_man_hinh()
-
+        
         # CardLayout quản lý tập trung các màn hình giao diện
         self.card_layout_manager = QStackedWidget()
         self.setCentralWidget(self.card_layout_manager)

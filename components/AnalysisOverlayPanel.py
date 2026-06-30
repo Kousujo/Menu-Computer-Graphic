@@ -1,6 +1,8 @@
 # components/AnalysisOverlayPanel.py
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextBrowser, QPushButton, QHBoxLayout, QLabel, QFrame
 from PyQt6.QtCore import Qt
+from styles.voltagent_styles import (qss_analysis_overlay, qss_analysis_title,
+                                     qss_analysis_close_button)
 
 class AnalysisOverlayPanel(QWidget):
     def __init__(self, parent_canvas):
@@ -14,40 +16,7 @@ class AnalysisOverlayPanel(QWidget):
         
         self.setFixedSize(760, 530)
         
-        self.setStyleSheet("""
-            QWidget#AnalysisOverlayPanel {
-                background-color: #0b0e17; 
-                border: 2px solid #00f0ff; 
-                border-radius: 12px;
-            }
-            QTextBrowser {
-                background-color: #0b0e17;
-                color: #e2e8f0;
-                font-family: 'Segoe UI', sans-serif;
-                font-size: 11pt;
-                padding-left: 18px;   /* ◄ Đẩy toàn bộ chữ đầu dòng lùi vào trong */
-                padding-right: 18px;  /* ◄ Giữ khoảng cách an toàn với thanh cuộn bên phải */
-                padding-top: 10px;
-            }
-            QScrollBar:vertical {
-                border: none; 
-                background: #111423; 
-                width: 10px; 
-                margin: 0px;
-                border-radius: 5px;
-            }
-            QScrollBar::handle:vertical {
-                background: #ff0055; 
-                min-height: 40px; 
-                border-radius: 5px;
-            }
-            QScrollBar::handle:vertical:hover {
-                background: #00f0ff;
-            }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                border: none; background: none;
-            }
-        """)
+        self.setStyleSheet(qss_analysis_overlay())
         
         layout_chinh = QVBoxLayout(self)
         layout_chinh.setContentsMargins(22, 18, 22, 18)
@@ -56,17 +25,7 @@ class AnalysisOverlayPanel(QWidget):
         # Tiêu đề
         lbl_title = QLabel("📊 KẾT QUẢ KHẢO SÁT & BIẾN THIÊN")
         lbl_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lbl_title.setStyleSheet("""
-            QLabel {
-                color: #00f0ff; 
-                font-weight: 900; 
-                font-size: 14pt; 
-                font-family: 'Segoe UI'; 
-                letter-spacing: 0.5px; 
-                background-color: #0b0e17; /* Đổ nền đen đặc khử hoàn toàn xuyên thấu */
-                padding: 4px 0px;          /* Tạo khoảng giãn cách nhẹ nhàng */
-            }
-        """)
+        lbl_title.setStyleSheet(qss_analysis_title())
         layout_chinh.addWidget(lbl_title)
         
         # Khung hiển thị nội dung HTML
@@ -80,14 +39,7 @@ class AnalysisOverlayPanel(QWidget):
         
         btn_dong = QPushButton("ĐÓNG BẢNG")
         btn_dong.setFixedSize(130, 36)
-        btn_dong.setStyleSheet("""
-            QPushButton {
-                background-color: #111423; color: #ff0055;
-                font-weight: bold; border: 2px solid #ff0055; border-radius: 6px;
-                font-family: 'Segoe UI'; font-size: 10pt;
-            }
-            QPushButton:hover { background-color: #ff0055; color: white; border: 2px solid #ffffff; }
-        """)
+        btn_dong.setStyleSheet(qss_analysis_close_button())
         btn_dong.clicked.connect(self.hide)
         layout_nut.addWidget(btn_dong)
         layout_chinh.addLayout(layout_nut)
