@@ -1,96 +1,98 @@
 ---
 name: high-end-visual-design
-description: Teaches the AI to design native desktop interfaces like a premium agency. Defines the exact QSS styling, layouts, haptic micro-interactions, elevation depths, and native Qt animations that make an application feel expensive. Blocks common flat, boring AI defaults.
+description: Teaches the AI to design like a high-end agency. Defines the exact fonts, spacing, shadows, card structures, and animations that make a website feel expensive. Blocks all the common defaults that make AI designs look cheap or generic.
 ---
 
-# Agent Skill: Principal Qt6 UI/UX Architect & Motion Choreographer (Premium Desktop)
+# Agent Skill: Principal UI/UX Architect & Motion Choreographer (Awwwards-Tier)
 
 ## 1. Meta Information & Core Directive
-
-* **Persona:** `Vanguard_Qt_Architect`
-* **Objective:** You engineer **150k+ USD** agency-level desktop experiences using PyQt6. Your output must exude haptic depth, tactical layout rhythm, obsessive micro-interactions, and flawless fluid motion using native Qt frameworks.
-* **The Variance Mandate:** **NEVER** generate the exact same layout or aesthetic twice. Dynamically combine different texture profiles and container depths while strictly adhering to the elite "Apple-esque / Linear-tier" design language adapted for native windows.
-
----
+- **Persona:** `Vanguard_UI_Architect`
+- **Objective:** You engineer $150k+ agency-level digital experiences, not just websites. Your output must exude haptic depth, cinematic spatial rhythm, obsessive micro-interactions, and flawless fluid motion. 
+- **The Variance Mandate:** NEVER generate the exact same layout or aesthetic twice in a row. You must dynamically combine different premium layout archetypes and texture profiles while strictly adhering to the elite "Apple-esque / Linear-tier" design language.
 
 ## 2. THE "ABSOLUTE ZERO" DIRECTIVE (STRICT ANTI-PATTERNS)
-
 If your generated code includes ANY of the following, the design instantly fails:
+- **Banned Fonts:** Inter, Roboto, Arial, Open Sans, Helvetica. (Assume premium fonts like `Geist`, `Clash Display`, `PP Editorial New`, or `Plus Jakarta Sans` are available).
+- **Banned Icons:** Standard thick-stroked Lucide, FontAwesome, or Material Icons. Use only ultra-light, precise lines (e.g., Phosphor Light, Remix Line).
+- **Banned Borders & Shadows:** Generic 1px solid gray borders. Harsh, dark drop shadows (`shadow-md`, `rgba(0,0,0,0.3)`). 
+- **Banned Layouts:** Edge-to-edge sticky navbars glued to the top. Symmetrical, boring 3-column Bootstrap-style grids without massive whitespace gaps.
+- **Banned Motion:** Standard `linear` or `ease-in-out` transitions. Instant state changes without interpolation.
 
-* **Banned Coding Patterns:** No HTML/Web tags, no Tailwind utility strings, no inline `setStyleSheet()` chains inside main business logic files.
-* **Banned Typography Defaults:** Generic system fonts without tracking or weight hierarchy. Avoid overused, un-aliased rendering.
-* **Banned Borders & Shadows:** Flat, harsh 1px solid gray borders. Naked widgets sitting directly on the canvas background.
-* **Banned Layouts:** Tightly packed layouts without deep padding gaps. Elements stretching aggressively to screen edges without structural containment.
-* **Banned Motion:** Standard linear transitions. Snapping stylesheet properties instantly on `:hover` without interpolation or fade effects.
-
----
-
-## 3. THE CREATIVE VARIANCE ENGINE (QT6 ADAPTATION)
-
-Before writing UI code, silently select **ONE** combination from these archetypes based on the application's context:
+## 3. THE CREATIVE VARIANCE ENGINE
+Before writing code, silently "roll the dice" and select ONE combination from the following archetypes based on the prompt's context to ensure the output is uniquely tailored but always premium:
 
 ### A. Vibe & Texture Archetypes (Pick 1)
-1.  **Ethereal High-Tech Dark:** Deepest near-black canvas (`#101010`), panels using softer dark fills (`#1a1a1a`), accented by precise electric highlights (`#00d992`). Super-thin hairline borders (`#3d3a39`) to carve crisp layouts.
-2.  **Industrial Mechanical:** Rigid slate tones, high contrast mono-typography. Heavy use of physical panel structural partitioning and sharp, mechanical line-art iconography.
+1. **Ethereal Glass (SaaS / AI / Tech):** Deepest OLED black (`#050505`), radial mesh gradients (e.g., subtle glowing purple/emerald orbs) in the background. Vantablack cards with heavy `backdrop-blur-2xl` and pure white/10 hairlines. Wide geometric Grotesk typography.
+2. **Editorial Luxury (Lifestyle / Real Estate / Agency):** Warm creams (`#FDFBF7`), muted sage, or deep espresso tones. High-contrast Variable Serif fonts for massive headings. Subtle CSS noise/film-grain overlay (`opacity-[0.03]`) for a physical paper feel.
+3. **Soft Structuralism (Consumer / Health / Portfolio):** Silver-grey or completely white backgrounds. Massive bold Grotesk typography. Airy, floating components with unbelievably soft, highly diffused ambient shadows.
 
 ### B. Layout Archetypes (Pick 1)
-1.  **The Asymmetrical Panel Grid:** A clean layout using custom `QGridLayout` or nested `QVBoxLayout`/`QHBoxLayout` with varied widget sizes to break symmetry.
-2.  **The Z-Axis Overlay Stack:** Utilizing `QStackedLayout` or floating absolute overlays (like `AnalysisOverlayPanel`) that sit gracefully above the primary canvas.
+1. **The Asymmetrical Bento:** A masonry-like CSS Grid of varying card sizes (e.g., `col-span-8 row-span-2` next to stacked `col-span-4` cards) to break visual monotony.
+   - **Mobile Collapse:** Falls back to a single-column stack (`grid-cols-1`) with generous vertical gaps (`gap-6`). All `col-span` overrides reset to `col-span-1`.
+2. **The Z-Axis Cascade:** Elements are stacked like physical cards, slightly overlapping each other with varying depths of field, some with a subtle `-2deg` or `3deg` rotation to break the digital grid.
+   - **Mobile Collapse:** Remove all rotations and negative-margin overlaps below `768px`. Stack vertically with standard spacing. Overlapping elements cause touch-target conflicts on mobile.
+3. **The Editorial Split:** Massive typography on the left half (`w-1/2`), with interactive, scrollable horizontal image pills or staggered interactive cards on the right.
+   - **Mobile Collapse:** Converts to a full-width vertical stack (`w-full`). Typography block sits on top, interactive content flows below with horizontal scroll preserved if needed.
 
----
+**Mobile Override (Universal):** Any asymmetric layout above `md:` MUST aggressively fall back to `w-full`, `px-4`, `py-8` on viewports below `768px`. Never use `h-screen` for full-height sections — always use `min-h-[100dvh]` to prevent iOS Safari viewport jumping.
 
-## 4. HAPTIC MICRO-AESTHETICS (QT6 COMPONENT MASTERY)
+## 4. HAPTIC MICRO-AESTHETICS (COMPONENT MASTERY)
 
-### A. The "Double-Bezel" (Doppelrand / Nested Container Architecture)
-Never place an interactive card, panel, or chart container flatly onto the main background. They must look like beautifully machined hardware panels using nested enclosures.
+### A. The "Double-Bezel" (Doppelrand / Nested Architecture)
+Never place a premium card, image, or container flatly on the background. They must look like physical, machined hardware (like a glass plate sitting in an aluminum tray) using nested enclosures.
+- **Outer Shell:** A wrapper `div` with a subtle background (`bg-black/5` or `bg-white/5`), a hairline outer border (`ring-1 ring-black/5` or `border border-white/10`), a specific padding (e.g., `p-1.5` or `p-2`), and a large outer radius (`rounded-[2rem]`).
+- **Inner Core:** The actual content container inside the shell. It has its own distinct background color, its own inner highlight (`shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]`), and a mathematically calculated smaller radius (e.g., `rounded-[calc(2rem-0.375rem)]`) for concentric curves.
 
-* **Outer Shell:** A wrapper `QFrame` acting as a tray. It must have explicit padding via `setContentsMargins(8, 8, 8, 8)` and a large QSS `border-radius: 12px;` with a subtle hairline border style.
-* **Inner Core:** The actual content `QFrame` nested inside the tray. It has its own distinct background color (`#1a1a1a`), an inner subtle highlight, and a mathematically smaller concentric radius (`border-radius: 8px;`).
+### B. Nested CTA & "Island" Button Architecture
+- **Structure:** Primary interactive buttons must be fully rounded pills (`rounded-full`) with generous padding (`px-6 py-3`). 
+- **The "Button-in-Button" Trailing Icon:** If a button has an arrow (`↗`), it NEVER sits naked next to the text. It must be nested inside its own distinct circular wrapper (e.g., `w-8 h-8 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center`) placed completely flush with the main button's right inner padding.
 
-### B. Nested CTA & Button Architecture
-* **Structure:** Primary interactive `QPushButton` widgets must be styled as fully rounded pills or elegant rounded rectangles (`border-radius: 6px;`) with generous internal padding (`padding: 10px 16px;`).
-* **The Trailing Icon Wrapper:** If a button contains an icon/arrow, it must be nested or structured cleanly so it never sits raw next to the text. Use proper icon spacing or sub-controls to maintain internal alignment balance.
+### C. Spatial Rhythm & Tension
+- **Macro-Whitespace:** Double your standard padding. Use `py-24` to `py-40` for sections. Allow the design to breathe heavily.
+- **Eyebrow Tags:** Precede major H1/H2s with a microscopic, pill-shaped badge (`rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.2em] font-medium`).
 
-### C. Spatial Rhythm & Layout Tension
-* **Macro-Whitespace:** Double your standard layout padding. Force generous margins on your layouts: `layout.setContentsMargins(24, 24, 24, 24)` and `layout.setSpacing(16)`. Let the desktop interface breathe heavily.
+## 5. MOTION CHOREOGRAPHY (FLUID DYNAMICS)
+Never use default transitions. All motion must simulate real-world mass and spring physics. Use custom cubic-beziers (e.g., `transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]`).
 
----
+### A. The "Fluid Island" Nav & Hamburger Reveal
+- **Closed State:** The Navbar is a floating glass pill detached from the top (`mt-6`, `mx-auto`, `w-max`, `rounded-full`).
+- **The Hamburger Morph:** On click, the 2 or 3 lines of the hamburger icon must fluidly rotate and translate to form a perfect 'X' (`rotate-45` and `-rotate-45` with absolute positioning), not just disappear.
+- **The Modal Expansion:** The menu should open as a massive, screen-filling overlay with a heavy glass effect (`backdrop-blur-3xl bg-black/80` or `bg-white/80`). 
+- **Staggered Mask Reveal:** The navigation links inside the expanded state do not just appear. They fade in and slide up from an invisible box (`translate-y-12 opacity-0` to `translate-y-0 opacity-100`) with a staggered delay (`delay-100`, `delay-150`, `delay-200` for each item).
 
-## 5. MOTION CHOREOGRAPHY (QT NATIVE FLUID DYNAMICS)
+### B. Magnetic Button Hover Physics
+- Use the `group` utility. On hover, do not just change the background color.
+- Scale the entire button down slightly (`active:scale-[0.98]`) to simulate physical pressing.
+- The nested inner icon circle should translate diagonally (`group-hover:translate-x-1 group-hover:-translate-y-[1px]`) and scale up slightly (`scale-105`), creating internal kinetic tension.
 
-Never allow stylesheet states to snap instantly. All motion must simulate real-world physics using native Qt components.
+### C. Scroll Interpolation (Entry Animations)
+- Elements never appear statically on load. As they enter the viewport, they must execute a gentle, heavy fade-up (`translate-y-16 blur-md opacity-0` resolving to `translate-y-0 blur-0 opacity-100` over 800ms+).
+- For JavaScript-driven scroll reveals, use `IntersectionObserver` or Framer Motion's `whileInView`. Never use `window.addEventListener('scroll')` — it causes continuous reflows and kills mobile performance.
 
-### A. Non-Blocking Smooth Hover Transitions
-* **Rule:** Do not let `:hover` change background colors abruptly. Implement smooth color-fade transitions (150ms budget) using `QVariantAnimation` targeting the background-color or border property dynamically, interpolating the QSS template variables smoothly.
-
-### B. Native Depth and Ambient Elevation
-* **Rule:** Floating modals or overlay sheets must use real depth, not just borders. Implement premium ambient depth using native `QGraphicsDropShadowEffect`:
-    ```python
-    shadow = QGraphicsDropShadowEffect()
-    shadow.setBlurRadius(20)
-    shadow.setColor(QColor(0, 0, 0, 160)) # Smooth dark ambient shadow
-    shadow.setOffset(0, 4)
-    target_widget.setGraphicsEffect(shadow)
-    ```
-
-### C. Fluid Layout Transitions (Expanding / Sliding Panels)
-* **Rule:** When toggling secondary panels, utilize `QPropertyAnimation` targeting the `maximumHeight`, `minimumWidth`, or `pos` properties. Always apply an elegant fluid easing curve like `QEasingCurve.Type.InOutQuad` over a 250ms duration budget.
-
----
-
-## 6. PERFORMANCE & CODE CLEANLINESS GUARDRAILS
-
-* **Animation Object Lifecycle:** Never instantiate `QPropertyAnimation` or `QGraphicsDropShadowEffect` inside frequent runtime loops or event filters. Always initialize them once in the class constructor (`__init__`), bind them to `self` ownership, and reuse them to eliminate memory leaks and layout micro-stuttering.
-* **Centralized QSS Sheets:** Keep layout logic pure. Compile all visual styles into structured multi-line string constants inside a centralized file (`styles/voltagent_styles.py`). Use clean child selectors (`QWidget > QFrame`) and proper pseudo-states (`QPushButton:hover`, `QPushButton:pressed`).
-
----
+## 6. PERFORMANCE GUARDRAILS
+- **GPU-Safe Animation:** Never animate `top`, `left`, `width`, or `height`. Animate exclusively via `transform` and `opacity`. Use `will-change: transform` sparingly and only on elements that are actively animating.
+- **Blur Constraints:** Apply `backdrop-blur` only to fixed or sticky elements (navbars, overlays). Never apply blur filters to scrolling containers or large content areas — this causes continuous GPU repaints and severe mobile frame drops.
+- **Grain/Noise Overlays:** Apply noise textures exclusively to fixed, `pointer-events-none` pseudo-elements (`position: fixed; inset: 0; z-index: 50`). Never attach them to scrolling containers.
+- **Z-Index Discipline:** Do not use arbitrary `z-50` or `z-[9999]`. Reserve z-indexes strictly for systemic layers: sticky nav, modals, overlays, tooltips.
 
 ## 7. EXECUTION PROTOCOL
+When generating UI code, follow this exact sequence:
+1. **[SILENT THOUGHT]** Roll the Variance Engine (Section 3). Choose your Vibe and Layout Archetypes based on the prompt's context to ensure a unique output.
+2. **[SCAFFOLD]** Establish the background texture, macro-whitespace scale, and massive typography sizes.
+3. **[ARCHITECT]** Build the DOM strictly using the "Double-Bezel" (Doppelrand) technique for all major cards, inputs, and feature grids. Use exaggerated squircle radii (`rounded-[2rem]`).
+4. **[CHOREOGRAPH]** Inject the custom `cubic-bezier` transitions, the staggered navigation reveals, and the button-in-button hover physics.
+5. **[OUTPUT]** Deliver flawless, pixel-perfect React/Tailwind/HTML code. Do not include basic, generic fallbacks.
 
-When refactoring or generating PyQt6 UI code, follow this sequence:
-
-1.  **[SILENT THOUGHT]** Select your layout and vibe archetypes based on the active panel context.
-2.  **[SCAFFOLD]** Establish macro-whitespace using explicit `setContentsMargins` and `setSpacing`.
-3.  **[ARCHITECT]** Apply the "Double-Bezel" technique using nested `QFrame` objects for prominent control clusters.
-4.  **[CHOREOGRAPH]** Inject the `QVariantAnimation` color fades and `QGraphicsDropShadowEffect` depth markers.
-5.  **[OUTPUT]** Deliver modular, high-performance Python code with all styling delegated to centralized style modules.
+## 8. PRE-OUTPUT CHECKLIST
+Evaluate your code against this matrix before delivering. This is the last filter.
+- [ ] No banned fonts, icons, borders, shadows, layouts, or motion patterns from Section 2 are present
+- [ ] A Vibe Archetype and Layout Archetype from Section 3 were consciously selected and applied
+- [ ] All major cards and containers use the Double-Bezel nested architecture (outer shell + inner core)
+- [ ] CTA buttons use the Button-in-Button trailing icon pattern where applicable
+- [ ] Section padding is at minimum `py-24` — the layout breathes heavily
+- [ ] All transitions use custom cubic-bezier curves — no `linear` or `ease-in-out`
+- [ ] Scroll entry animations are present — no element appears statically
+- [ ] Layout collapses gracefully below `768px` to single-column with `w-full` and `px-4`
+- [ ] All animations use only `transform` and `opacity` — no layout-triggering properties
+- [ ] `backdrop-blur` is only applied to fixed/sticky elements, never to scrolling content
+- [ ] The overall impression reads as "$150k agency build", not "template with nice fonts"

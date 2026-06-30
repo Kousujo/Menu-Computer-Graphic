@@ -1,5 +1,5 @@
 import sys
-from PyQt6.QtWidgets import QMainWindow, QStackedWidget, QApplication
+from PyQt6.QtWidgets import QApplication, QMainWindow, QStackedWidget
 from styles.voltagent_styles import Color
 
 
@@ -61,6 +61,8 @@ class MainFrame(QMainWindow):
 
 
 def main():
+    # ponytail: WebEngine lazy-loader — import before QApplication is created
+    from PyQt6.QtWebEngineWidgets import QWebEngineView  # noqa: F401
     app = QApplication(sys.argv)
     
     chuong_trinh = MainFrame()

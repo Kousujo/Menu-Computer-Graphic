@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Đồ Họa Máy Tính</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #101010;
+    color: #f2f2f2;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px;
+    overflow: hidden;
+  }
+
+  /* ── Header ──────────────────────────────────────── */
+  header {
+    width: 100%;
+    max-width: 1400px;
+    text-align: center;
+    padding: 12px 0 20px;
+  }
+  header h1 {
+    font-weight: 700;
+    font-size: 32px;
+    letter-spacing: 2px;
+    color: #ffffff;
+  }
+
+  /* ── Main grid + sidebar ─────────────────────────── */
+  #main {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    max-width: 1400px;
+    flex: 1;
+  }
+
+  #chapters-grid {
+    flex: 3;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-content: start;
+  }
+
+  #chapters-grid > .card:first-child {
+    grid-column: 1 / -1;
+  }
+
+  /* ── Card Container Flipped Architecture ─────────── */
+  .card {
+    perspective: 1200px;
+    height: 140px;
+  }
+  
+  #chapters-grid > .card:first-child {
+    height: 160px;
+  }
+
+  .card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(.23,1,.32,1), 
+                box-shadow 0.6s cubic-bezier(.23,1,.32,1);
+    border-radius: 12px;
+  }
+
+  .card.active:hover {
+    transform: scale(1.03);
+    z-index: 10;
+  }
+  
+  .card.active:hover .card-inner {
+    transform: rotateX(-180deg);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 217, 146, 0.2);
+  }
+
+  .card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 12px;
+    border: 1px solid #3d3a39;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .card-front {
+    background: #1a1a1a;
+    gap: 6px;
+  }
+  .card-front .emoji { font-size: 24px; margin-bottom: 2px; }
+  .card-front .eyebrow {
+    font-weight: 600;
+    font-size: 10pt;
+    color: #00d992;
+    letter-spacing: 2px;
+  }
+  .card-front h3 {
+    font-weight: 600;
+    font-size: 16px;
+    color: #f2f2f2;
+    letter-spacing: 0.5px;
+  }
+
+  .card-back {
+    background: #00d992;
+    color: #101010;
+    transform: rotateX(180deg);
+    border-color: #00d992;
+    justify-content: space-between;
+  }
+  .eyebrow-back {
+    font-weight: 700;
+    font-size: 9pt;
+    letter-spacing: 1.5px;
+    opacity: 0.8;
+  }
+  .card-back p {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .action-hint {
+    font-size: 9pt;
+    font-weight: 700;
+    text-align: right;
+    opacity: 0.9;
+  }
+
+  .card.locked .card-front {
+    background: #141414;
+    border-color: #262524;
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .card.locked h3 { color: #8b949e; }
+
+  #chapters-grid:has(.card.active:hover) .card.active:not(:hover) {
+    opacity: 0.4;
+    transform: scale(0.98);
+    transition: all 0.4s cubic-bezier(.23,1,.32,1);
+  }
+
+  #sidebar {
+    flex: 0 0 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .sidebar-card {
+    background: #101010;
+    border: 1px solid #3d3a39;
+    border-radius: 12px;
+    padding: 6px;
+  }
+  .sidebar-card-inner {
+    background: #1a1a1a;
+    border: 1px solid #3d3a39;
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .sidebar-card-inner .eyebrow {
+    font-weight: 600;
+    font-size: 10pt;
+    color: #00d992;
+    letter-spacing: 2px;
+    display: block;
+    margin-bottom: 12px;
+  }
+  .sidebar-btn {
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: 1px solid #3d3a39;
+    border-radius: 6px;
+    color: #f2f2f2;
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    padding: 10px 14px;
+    text-align: left;
+    cursor: pointer;
+    margin-bottom: 8px;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .sidebar-btn:last-child { margin-bottom: 0; }
+  .sidebar-btn:hover {
+    background: #00d992;
+    color: #101010;
+    border-color: #00d992;
+  }
+  .sidebar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .sidebar-row:last-child { margin-bottom: 0; }
+  .sidebar-row .text {
+    font-size: 13px;
+    color: #bdbdbd;
+  }
+  .status-dot { color: #00d992; animation: pulse 2s infinite; }
+  .status-label { font-size: 13px; color: #00d992; font-weight: 600; }
+
+  footer {
+    width: 100%;
+    max-width: 1400px;
+    text-align: right;
+    padding: 16px 0 0;
+  }
+  footer span {
+    font-size: 12px;
+    color: #8b949e;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  footer span:hover { color: #00d992; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>ĐỒ HỌA MÁY TÍNH</h1>
+  </header>
+
+  <div id="main">
+    <div id="chapters-grid">
+      <div class="card active" data-chapter="1" onclick="pyBridge.open_chapter('Chương 1')">
+        <div class="card-inner">
+          <div class="card-front">
+            <span class="emoji">📐</span>
+            <span class="eyebrow">CHƯƠNG 1</span>
+            <h3>CÁC YẾU TỐ CƠ SỞ CỦA ĐỒ HỌA</h3>
+          </div>
+          <div class="card-back">
+            <span class="eyebrow-back">CHI TIẾT CHƯƠNG 1</span>
+            <p>Thuật toán: DDA, Bresenham, Circle, Oval...</p>
+            <span class="action-hint">Bấm để thực hành →</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card active" data-chapter="2" onclick="pyBridge.open_chapter('Chương 2')">
+        <div class="card-inner">
+          <div class="card-front">
+            <span class="emoji">🎨</span>
+            <span class="eyebrow">CHƯƠNG 2</span>
+            <h3>TÔ MÀU</h3>
+          </div>
+          <div class="card-back">
+            <span class="eyebrow-back">CHI TIẾT CHƯƠNG 2</span>
+            <p>Flood Fill, Scanline</p>
+            <span class="action-hint">Bấm để thực hành →</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card locked" data-chapter="3">
+        <div class="card-inner">
+          <div class="card-front">
+            <span class="emoji">🔄</span>
+            <span class="eyebrow">CHƯƠNG 3</span>
+            <h3>BIẾN ĐỔI ĐỒ HỌA 2D 🔒</h3>
+          </div>
+          <div class="card-back">
+            <span class="eyebrow-back">CHI TIẾT CHƯƠNG 3</span>
+            <p>Translation, Rotation, Scaling</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card locked" data-chapter="4">
+        <div class="card-inner">
+          <div class="card-front">
+            <span class="emoji">🧊</span>
+            <span class="eyebrow">CHƯƠNG 4</span>
+            <h3>BIẾN ĐỔI 3D & PROJECTION 🔒</h3>
+          </div>
+          <div class="card-back">
+            <span class="eyebrow-back">CHI TIẾT CHƯƠNG 4</span>
+            <p>3D Transform, Perspective</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card locked" data-chapter="5">
+        <div class="card-inner">
+          <div class="card-front">
+            <span class="emoji">👁️</span>
+            <span class="eyebrow">CHƯƠNG 5</span>
+            <h3>QUAN SÁT ĐỒ HỌA 3D 🔒</h3>
+          </div>
+          <div class="card-back">
+            <span class="eyebrow-back">CHI TIẾT CHƯƠNG 5</span>
+            <p>Camera, Viewport</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card locked" data-chapter="6">
+        <div class="card-inner">
+          <div class="card-front">
+            <span class="emoji">📈</span>
+            <span class="eyebrow">CHƯƠNG 6</span>
+            <h3>ĐƯỜNG CONG & MẶT CONG 🔒</h3>
+          </div>
+          <div class="card-back">
+            <span class="eyebrow-back">CHI TIẾT CHƯƠNG 6</span>
+            <p>Bezier, B-Spline, Surface</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card locked" data-chapter="7">
+        <div class="card-inner">
+          <div class="card-front">
+            <span class="emoji">🔲</span>
+            <span class="eyebrow">CHƯƠNG 7</span>
+            <h3>KHỬ CHE KHUẤT 🔒</h3>
+          </div>
+          <div class="card-back">
+            <span class="eyebrow-back">CHI TIẾT CHƯƠNG 7</span>
+            <p>Z-Buffer, Painter</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside id="sidebar">
+      <div class="sidebar-card">
+        <div class="sidebar-card-inner">
+          <span class="eyebrow">TIỆN ÍCH</span>
+          <button class="sidebar-btn" onclick="pyBridge.show_author_info()">📖  Open Documentation</button>
+          <button class="sidebar-btn" onclick="pyBridge.show_author_info()">🧹  Reset System Canvas</button>
+        </div>
+      </div>
+      <div class="sidebar-card">
+        <div class="sidebar-card-inner">
+          <span class="eyebrow">THÔNG TIN</span>
+          <div class="sidebar-row">
+            <span class="icon">📚</span>
+            <span class="text">Course: Computer Graphics</span>
+          </div>
+          <div class="sidebar-row">
+            <span class="icon">👤</span>
+            <span class="text">Developer: Kousujo</span>
+          </div>
+          <div class="sidebar-row">
+            <span class="status-dot">●</span>
+            <span class="status-label">System Status: Active</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <footer>
+    <span onclick="pyBridge.show_author_info()">Developed by Kousujo</span>
+  </footer>
+
+  <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+  <script>
+    new QWebChannel(qt.webChannelTransport, function(channel) {
+      window.pyBridge = channel.objects.pyBridge;
+    });
+  </script>
+</body>
+</html>
