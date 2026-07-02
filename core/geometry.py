@@ -147,3 +147,14 @@ def get_ellipse_fill_pixels(xc: int, yc: int, a: int, b: int,
         yield from func(xc, yc, a, b, color_tuple)
     else:
         yield from func(xc, yc, a, b, color_tuple, batch_size=batch_size)
+
+
+# ==============================================================================
+# HÀM TIỆN ÍCH — outline hình tròn (dùng cho fill)
+# ==============================================================================
+
+def get_circle_pixels(xc, yc, r, color_tuple=(30, 30, 30)):
+    """Trả về outline hình tròn (viền) dùng midpoint, có màu."""
+    from core.algorithms import midpoint_circle
+    outline = midpoint_circle(xc, yc, r)
+    return [(x, y, color_tuple) for x, y in outline]

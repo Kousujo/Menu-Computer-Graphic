@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QWidget
-from PyQt6.QtCore import Qt, QPointF, QPoint
+from PyQt6.QtCore import Qt, QPointF, QPoint, QTimer
 from PyQt6.QtGui import QPainter, QColor, QPen, QTransform
 
 class GraphicArea(QWidget):
@@ -13,6 +13,13 @@ class GraphicArea(QWidget):
         self.vi_tri_chuot_cu = QPointF()
         self.dang_keo_chuot = False
 
+        # Animation engine
+        self._timer_hoat_anh = QTimer(self)
+        self._timer_hoat_anh.setInterval(10)
+        self._timer_hoat_anh.timeout.connect(self._xu_ly_frame_hoat_anh)
+        self._generator_hoat_anh = None
+        self._dang_hoat_anh = False
+
     def dat_lai_khung_nhin(self):
         self.he_so_zoom = 1.0
         self.goc_toa_do_pan = QPointF(0, 0)
@@ -21,6 +28,30 @@ class GraphicArea(QWidget):
     def cap_nhat_hinh_ve(self, danh_sach_pixel):
         self.danh_sach_pixel = danh_sach_pixel
         self.update()
+
+    def cap_nhat_hinh_ve_co_hoat_anh(self, generator):
+        """Nhận generator, chạy animation với QTimer (nhịp 10ms)."""
+        self._timer_hoat_anh.stop()
+        self.danh_sach_pixel = []
+        self._generator_hoat_anh = generator
+        self._dang_hoat_anh = True
+        self._timer_hoat_anh.start()
+
+    def _xu_ly_frame_hoat_anh(self):
+        """Callback QTimer: lấy batch tiếp theo từ generator và vẽ."""
+        gen = self._generator_hoat_anh
+        if gen is None:
+            self._timer_hoat_anh.stop()
+            self._dang_hoat_anh = False
+            return
+        try:
+            batch = next(gen)
+            self.danh_sach_pixel.extend(batch)
+            self.update()
+        except StopIteration:
+            self._timer_hoat_anh.stop()
+            self._dang_hoat_anh = False
+            self._generator_hoat_anh = None
 
     def paintEvent(self, event):
         painter = QPainter(self)

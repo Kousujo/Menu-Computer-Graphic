@@ -54,7 +54,7 @@ class StartPanel(QWidget):
         # NÚT BẮT ĐẦU
         self.btn_bat_dau = QPushButton("BẮT ĐẦU")
         self.btn_bat_dau.setObjectName("btn_bat_dau")
-        self.btn_bat_dau.clicked.connect(lambda: self.xu_ly_vao_bai("Chuong_1"))
+        self.btn_bat_dau.clicked.connect(lambda: self.xu_ly_vao_bai("Exercises"))
         self.main_layout.addWidget(self.btn_bat_dau, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # AUTHOR

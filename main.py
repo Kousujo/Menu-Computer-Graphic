@@ -26,8 +26,8 @@ class MainFrame(QMainWindow):
 
     def khoi_tao_cac_bai_thuc_hanh(self):
         """Nơi duy nhất bạn khai báo bài tập mới."""
-        from View.ExercisesPanel import Chuong1Panel
-        self.addScreen(Chuong1Panel(self), "Chuong_1")
+        from View.ExercisesPanel import ExercisesPanel
+        self.addScreen(ExercisesPanel(self), "Exercises")
 
     def addScreen(self, widget, name):
         self.card_layout_manager.addWidget(widget)

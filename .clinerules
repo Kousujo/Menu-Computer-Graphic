@@ -35,4 +35,4 @@ Not lazy about: understanding the problem (read it fully and trace the real flow
 - NEVER use generic `read_file` or `grep` commands to scan files blindly until you have retrieved the high-level context from `codegraph_explore`.
 - Every task completion plan must start with calling `codegraph_explore` to gather initial context. Do not bypass this rule.
 - Inside this specific project, you must ALWAYS pass the exact `projectPath` parameter whenever you execute the `codegraph_explore` tool.
-- Use this absolute path for the `projectPath` parameter: "D:/VScode/Chuong_1"
+- Use this absolute path for the `projectPath` parameter: "D:/VScode/BaiTapOngPhuong"
