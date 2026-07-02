@@ -1,4 +1,3 @@
-# components/GraphFunctionPanel.py
 from components.BaseGraphicPanel import BaseGraphicPanel
 from PyQt6.QtWidgets import QPushButton, QHBoxLayout
 
@@ -9,10 +8,6 @@ class GraphFunctionPanel(BaseGraphicPanel):
         self.chinh_sua_nut_sidebar()
 
     def chinh_sua_nut_sidebar(self):
-        """
-        Bóc tách nút cũ và sắp xếp lại layout nút bấm theo hàng ngang
-        để tích hợp thêm nút Khảo sát mà không làm vỡ giao diện.
-        """
         self.btn_ve_hinh.hide()
         
         self.btn_khao_sat = QPushButton("KHẢO SÁT")

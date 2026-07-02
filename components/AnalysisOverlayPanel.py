@@ -1,11 +1,10 @@
-# components/AnalysisOverlayPanel.py
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextBrowser, QPushButton, QHBoxLayout, QLabel, QFrame
 from PyQt6.QtCore import Qt
 
 class AnalysisOverlayPanel(QWidget):
     def __init__(self, parent_canvas):
         """
-        Bảng báo cáo khảo sát CHỐNG XUYÊN THẤU TUYỆT ĐỐI
+        Bảng báo cáo khảo sát
         """
         super().__init__(parent_canvas)
         self.setObjectName("AnalysisOverlayPanel")
@@ -63,8 +62,8 @@ class AnalysisOverlayPanel(QWidget):
                 font-size: 14pt; 
                 font-family: 'Segoe UI'; 
                 letter-spacing: 0.5px; 
-                background-color: #0b0e17; /* Đổ nền đen đặc khử hoàn toàn xuyên thấu */
-                padding: 4px 0px;          /* Tạo khoảng giãn cách nhẹ nhàng */
+                background-color: #0b0e17;
+                padding: 4px 0px;
             }
         """)
         layout_chinh.addWidget(lbl_title)

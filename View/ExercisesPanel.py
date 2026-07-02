@@ -1,30 +1,17 @@
-# exercises/Chuong_1.py
 
 from components.GraphFunctionPanel import GraphFunctionPanel
 from components.AnalysisOverlayPanel import AnalysisOverlayPanel
 from PyQt6.QtWidgets import QMessageBox, QLineEdit
 from PyQt6.QtCore import QPointF
-from core import geometry_1
+from core import geometry
 import math
 
 
 class Chuong1Panel(GraphFunctionPanel):
-    """
-    Chapter 1: Basic Graphics Elements
-    Combines algorithms from:
-    - Bai_1: Basic shapes (8 algorithms)
-    - Bai_2: Circle patterns (6 algorithms)
-    - Bai_3: Mathematical functions (5 algorithms)
-    Total: 23 algorithms integrated into one unified panel
-    """
-
     def __init__(self, mainframe):
         super().__init__(mainframe, title_sidebar="CHƯƠNG 1: CÁC YẾU TỐ CƠ SỞ")
 
         all_algorithms = [
-        # ============================================================================
-        # PHẦN 1: HỌA TIẾT CƠ BẢN
-        # ============================================================================
             "1. Hình tam giác thường",
             "2. Hình vuông",
             "3. Hình chữ nhật",
@@ -37,18 +24,12 @@ class Chuong1Panel(GraphFunctionPanel):
             "10. Cung Ellipse",
             "11. Đường tròn đi qua 3 điểm A, B, C",
             "12. Cung tròn đi qua 3 điểm A, B, C",
-        # ============================================================================
-        # PHẦN 2: HỌA TIẾT ĐỒ TRÒN PHỨC TẠP
-        # ============================================================================
             "13. Hệ đường tròn đồng tâm",
             "14. Vòng bát chánh của Mahoraga",
             "15. Hoa văn đan kết 24 đường tròn",
             "16. Vòng tròn nan hoa đan xen",
             "17. Hoa văn 8 đường tròn giao tâm",
             "18. Vòng tròn lồng sao răng cưa",
-        # ============================================================================
-        # PHẦN 3: ĐỒ THỊ HÀM SỐ TOÁN HỌC
-        # ============================================================================
             "19. Hàm bậc nhất (y = ax + b)",
             "20. Hàm bậc hai (y = ax² + bx + c)",
             "21. Hàm bậc ba (y = ax³ + bx² + cx + d)",
@@ -86,9 +67,6 @@ class Chuong1Panel(GraphFunctionPanel):
         self.btn_ve_hinh_moi.setVisible(la_do_thi_ham_so)
         self.btn_ve_hinh.setVisible(not la_do_thi_ham_so)
 
-        # ========================================================================
-        # PHẦN 1: HỌA TIẾT CƠ BẢN
-        # ========================================================================
 
         if index == 0:  # Hình tam giác
             self.them_o_nhap("canh_a", "Cạnh a (Đáy):", "200")
@@ -275,7 +253,7 @@ class Chuong1Panel(GraphFunctionPanel):
             # ====================================================================
 
             if index == 0:  # Hình tam giác
-                pixels = geometry_1.get_triangle_pixels(
+                pixels = geometry.get_triangle_pixels(
                     x_tam,
                     y_tam,
                     int(self.inputs["canh_a"].text()),
@@ -285,10 +263,10 @@ class Chuong1Panel(GraphFunctionPanel):
 
             elif index == 1:  # Hình vuông
                 canh = int(self.inputs["canh"].text())
-                pixels = geometry_1.get_rectangle_pixels(x_tam, y_tam, canh, canh)
+                pixels = geometry.get_rectangle_pixels(x_tam, y_tam, canh, canh)
 
             elif index == 2:  # Hình chữ nhật
-                pixels = geometry_1.get_rectangle_pixels(
+                pixels = geometry.get_rectangle_pixels(
                     x_tam,
                     y_tam,
                     int(self.inputs["rong"].text()),
@@ -296,7 +274,7 @@ class Chuong1Panel(GraphFunctionPanel):
                 )
 
             elif index == 3:  # Hình bình hành
-                pixels = geometry_1.get_parallelogram_pixels(
+                pixels = geometry.get_parallelogram_pixels(
                     x_tam,
                     y_tam,
                     int(self.inputs["day"].text()),
@@ -305,7 +283,7 @@ class Chuong1Panel(GraphFunctionPanel):
                 )
 
             elif index == 4:  # Hình thoi
-                pixels = geometry_1.get_rhombus_pixels(
+                pixels = geometry.get_rhombus_pixels(
                     x_tam,
                     y_tam,
                     int(self.inputs["cheo_x"].text()),
@@ -313,7 +291,7 @@ class Chuong1Panel(GraphFunctionPanel):
                 )
 
             elif index == 5:  # Hình thang cân
-                pixels = geometry_1.get_isosceles_trapezoid_pixels(
+                pixels = geometry.get_isosceles_trapezoid_pixels(
                     x_tam,
                     y_tam,
                     int(self.inputs["day_lon"].text()),
@@ -323,8 +301,8 @@ class Chuong1Panel(GraphFunctionPanel):
 
             elif index == 6:  # Đa giác đều
                 n = int(self.inputs["so_canh"].text())
-                P = [geometry_1.ToaDo2D() for _ in range(n)]
-                pixels = geometry_1.DrawPoly(
+                P = [geometry.ToaDo2D() for _ in range(n)]
+                pixels = geometry.DrawPoly(
                     P,
                     n,
                     x_tam,
@@ -333,7 +311,7 @@ class Chuong1Panel(GraphFunctionPanel):
                 )
 
             elif index == 7:  # Hình ngôi sao
-                pixels = geometry_1.get_star_pixels(
+                pixels = geometry.get_star_pixels(
                     x_tam,
                     y_tam,
                     int(self.inputs["bk_ngoai"].text()),
@@ -348,14 +326,14 @@ class Chuong1Panel(GraphFunctionPanel):
                 r = int(self.inputs["r"].text())
                 g1 = float(self.inputs["goc_bat_dau"].text())
                 g2 = float(self.inputs["goc_ket_thuc"].text())
-                pixels = geometry_1.Arc(x_tam, y_tam, g1, g2, r)
+                pixels = geometry.Arc(x_tam, y_tam, g1, g2, r)
 
             elif index == 9:  # Cung Ellipse
                 rx = int(self.inputs["rx"].text())
                 ry = int(self.inputs["ry"].text())
                 g1 = float(self.inputs["goc_bat_dau"].text())
                 g2 = float(self.inputs["goc_ket_thuc"].text())
-                pixels = geometry_1.Sector(x_tam, y_tam, g1, g2, rx, ry)
+                pixels = geometry.Sector(x_tam, y_tam, g1, g2, rx, ry)
 
             elif index == 10:  # Đường tròn qua 3 điểm
                 # ponytail: Inputs are expressions relative to x_tam/y_tam;
@@ -366,10 +344,10 @@ class Chuong1Panel(GraphFunctionPanel):
                 by = int(eval(self.inputs["by"].text(), {"x_tam": x_tam, "y_tam": y_tam}))
                 cx = int(eval(self.inputs["cx"].text(), {"x_tam": x_tam, "y_tam": y_tam}))
                 cy = int(eval(self.inputs["cy"].text(), {"x_tam": x_tam, "y_tam": y_tam}))
-                A = geometry_1.ToaDo2D(ax, ay)
-                B = geometry_1.ToaDo2D(bx, by)
-                C = geometry_1.ToaDo2D(cx, cy)
-                pixels = geometry_1.Circle3P(A, B, C)
+                A = geometry.ToaDo2D(ax, ay)
+                B = geometry.ToaDo2D(bx, by)
+                C = geometry.ToaDo2D(cx, cy)
+                pixels = geometry.Circle3P(A, B, C)
                 # ponytail: Vẽ vòng tròn màu nổi bật quanh 3 điểm A(đỏ), B(xanh lá), C(xanh dương)
                 for x, y, color in [(ax, ay, (255, 50, 50)), (bx, by, (50, 255, 50)), (cx, cy, (50, 50, 255))]:
                     pixels.extend([(x + dx, y + dy, color) for dx, dy in 
@@ -382,10 +360,10 @@ class Chuong1Panel(GraphFunctionPanel):
                 by = int(eval(self.inputs["by"].text(), {"x_tam": x_tam, "y_tam": y_tam}))
                 cx = int(eval(self.inputs["cx"].text(), {"x_tam": x_tam, "y_tam": y_tam}))
                 cy = int(eval(self.inputs["cy"].text(), {"x_tam": x_tam, "y_tam": y_tam}))
-                A = geometry_1.ToaDo2D(ax, ay)
-                B = geometry_1.ToaDo2D(bx, by)
-                C = geometry_1.ToaDo2D(cx, cy)
-                pixels = geometry_1.Arc3P(A, B, C)
+                A = geometry.ToaDo2D(ax, ay)
+                B = geometry.ToaDo2D(bx, by)
+                C = geometry.ToaDo2D(cx, cy)
+                pixels = geometry.Arc3P(A, B, C)
                 # ponytail: Vẽ vòng tròn màu nổi bật quanh 3 điểm A(đỏ), B(xanh lá - điểm giữa), C(xanh dương)
                 for x, y, color in [(ax, ay, (255, 50, 50)), (bx, by, (50, 255, 50)), (cx, cy, (50, 50, 255))]:
                     pixels.extend([(x + dx, y + dy, color) for dx, dy in 
@@ -398,30 +376,30 @@ class Chuong1Panel(GraphFunctionPanel):
             elif index == 12:  # Hệ đường tròn đồng tâm
                 basic_r = int(self.inputs["basic_r"].text())
                 so_vong = int(self.inputs["so_vong"].text())
-                pixels = geometry_1.get_target_pixels(x_tam, y_tam, basic_r, so_vong)
+                pixels = geometry.get_target_pixels(x_tam, y_tam, basic_r, so_vong)
 
             elif index == 13:  # Vòng bát chánh
                 r = int(self.inputs["r"].text())
                 r_nho = int(self.inputs["r_nho"].text())
-                pixels = geometry_1.get_flower_8_petals_pixels(x_tam, y_tam, r, r_nho)
+                pixels = geometry.get_flower_8_petals_pixels(x_tam, y_tam, r, r_nho)
 
             elif index == 14:  # Hoa văn đan kết 24
                 r = int(self.inputs["r"].text())
                 R_ngoai = int(self.inputs["R_ngoai"].text())
-                pixels = geometry_1.get_flower_24_petals_pixels(x_tam, y_tam, r, R_ngoai)
+                pixels = geometry.get_flower_24_petals_pixels(x_tam, y_tam, r, R_ngoai)
 
             elif index == 15:  # Vòng tròn nan hoa
                 r = int(self.inputs["r"].text())
-                pixels = geometry_1.get_wheel_with_spokes_pixels(x_tam, y_tam, r)
+                pixels = geometry.get_wheel_with_spokes_pixels(x_tam, y_tam, r)
 
             elif index == 16:  # Hoa văn 8 đường tròn
                 R = int(self.inputs["R"].text())
-                pixels = geometry_1.get_circular_pattern_8_petals_pixels(x_tam, y_tam, R)
+                pixels = geometry.get_circular_pattern_8_petals_pixels(x_tam, y_tam, R)
 
             elif index == 17:  # Vòng tròn lồng sao
                 r = int(self.inputs["r"].text())
                 r_ngoai = int(self.inputs["r_ngoai"].text())
-                pixels = geometry_1.get_star_with_inner_circle_pixels(
+                pixels = geometry.get_star_with_inner_circle_pixels(
                     x_tam, y_tam, r, r_ngoai
                 )
 
@@ -438,7 +416,7 @@ class Chuong1Panel(GraphFunctionPanel):
                 a = float(self.inputs["a"].text())
                 b = float(self.inputs["b"].text())
                 scale = float(self.inputs["scale"].text())
-                pixels = geometry_1.get_line_function_pixels(0, 0, a, b, scale=scale)
+                pixels = geometry.get_line_function_pixels(0, 0, a, b, scale=scale)
 
             elif index == 19:  # Hàm bậc hai
                 w_nua = self.canvas.width() / 2
@@ -450,7 +428,7 @@ class Chuong1Panel(GraphFunctionPanel):
                 b = float(self.inputs["b"].text())
                 c = float(self.inputs["c"].text())
                 scale = float(self.inputs["scale"].text())
-                pixels = geometry_1.get_quadratic_function_pixels(0, 0, a, b, c, scale=scale)
+                pixels = geometry.get_quadratic_function_pixels(0, 0, a, b, c, scale=scale)
 
             elif index == 20:  # Hàm bậc ba
                 w_nua = self.canvas.width() / 2
@@ -463,7 +441,7 @@ class Chuong1Panel(GraphFunctionPanel):
                 c = float(self.inputs["c"].text())
                 d = float(self.inputs["d"].text())
                 scale = float(self.inputs["scale"].text())
-                pixels = geometry_1.get_cubic_function_pixels(0, 0, a, b, c, d, scale=scale)
+                pixels = geometry.get_cubic_function_pixels(0, 0, a, b, c, d, scale=scale)
 
             elif index == 21:  # Hàm phân thức 1/1
                 w_nua = self.canvas.width() / 2
@@ -476,7 +454,7 @@ class Chuong1Panel(GraphFunctionPanel):
                 c = float(self.inputs["c"].text())
                 d = float(self.inputs["d"].text())
                 scale = float(self.inputs["scale"].text())
-                pixels = geometry_1.get_rational_1_1_pixels(0, 0, a, b, c, d, scale=scale)
+                pixels = geometry.get_rational_1_1_pixels(0, 0, a, b, c, d, scale=scale)
 
             elif index == 22:  # Hàm phân thức 2/1
                 w_nua = self.canvas.width() / 2
@@ -490,7 +468,7 @@ class Chuong1Panel(GraphFunctionPanel):
                 d = float(self.inputs["d"].text())
                 e = float(self.inputs["e"].text())
                 scale = float(self.inputs["scale"].text())
-                pixels = geometry_1.get_rational_2_1_pixels(0, 0, a, b, c, d, e, scale=scale)
+                pixels = geometry.get_rational_2_1_pixels(0, 0, a, b, c, d, e, scale=scale)
 
             self.canvas.cap_nhat_hinh_ve(pixels)
 

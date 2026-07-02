@@ -1,8 +1,7 @@
-# BaseGraphicPanel.py
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QFrame, QPushButton, QLabel, QListWidget, QFormLayout
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QFont
-from components.GraphicArea import GraphicArea  # Import class GraphicArea từ file riêng biệt
+from components.GraphicArea import GraphicArea
 
 class BaseGraphicPanel(QWidget):
     def __init__(self, mainframe, title_sidebar="DANH SÁCH YÊU CẦU"):
@@ -74,7 +73,6 @@ class BaseGraphicPanel(QWidget):
         self.btn_an_hien_form.clicked.connect(self.xu_ly_an_hien_panel)
         layout_noi.addWidget(self.btn_an_hien_form)
 
-        # Khung chứa layout nhập liệu chính
         self.khung_input = QWidget()
         self.khung_input.setStyleSheet("background: transparent; border: none;")
         self.form_layout = QFormLayout(self.khung_input)
