@@ -3,12 +3,8 @@
 from components.BaseGraphicPanel import BaseGraphicPanel
 from PyQt6.QtWidgets import QLineEdit, QLabel, QRadioButton, QButtonGroup, QFrame, QHBoxLayout
 from core.geometry import (
-    _circle_fill,
-    _circle_fill_scanline,
-    _circle_fill_flood,
-    _ellipse_fill,
-    _ellipse_fill_scanline,
-    _ellipse_fill_flood,
+    get_circle_fill_pixels,
+    get_ellipse_fill_pixels,
     get_circle_pixels,
 )
 from core.algorithms import midpoint_ellipse
@@ -140,20 +136,25 @@ class ExercisesPanel(BaseGraphicPanel):
             r = params.get("r", 50)
             if self._selected_algorithm == "to_san":
                 # Tô sẵn: vẽ outline trước, sau đó tô màu (outline vẽ sau nên nằm trên)
-                outline = get_circle_pixels(xc, yc, r)
-                fill = _circle_fill(xc, yc, r, color_tuple=(3, 105, 161))
-                danh_sach_pixel = fill + outline
-                self.canvas.cap_nhat_hinh_ve(danh_sach_pixel)
+                def circle_to_san_gen():
+                    outline = get_circle_pixels(xc, yc, r)
+                    if outline:
+                        yield outline
+                    yield from get_circle_fill_pixels(
+                        xc, yc, r, algorithm="to_san",
+                        color_tuple=(3, 105, 161), batch_size=999999
+                    )
+                self.canvas.cap_nhat_hinh_ve_co_hoat_anh(circle_to_san_gen())
                 return
             # Scanline hoặc Tô loang: animation
             def circle_gen():
                 outline = get_circle_pixels(xc, yc, r)
                 if outline:
                     yield outline
-                if self._selected_algorithm == "scanline":
-                    yield from _circle_fill_scanline(xc, yc, r, color_tuple=(3, 105, 161))
-                else:
-                    yield from _circle_fill_flood(xc, yc, r, color_tuple=(3, 105, 161), batch_size=400)
+                yield from get_circle_fill_pixels(
+                    xc, yc, r, algorithm=self._selected_algorithm,
+                    color_tuple=(3, 105, 161), batch_size=400
+                )
             self.canvas.cap_nhat_hinh_ve_co_hoat_anh(circle_gen())
             return
 
@@ -161,18 +162,23 @@ class ExercisesPanel(BaseGraphicPanel):
             a = params.get("a", 80)
             b = params.get("b", 50)
             if self._selected_algorithm == "to_san":
-                outline = midpoint_ellipse(xc, yc, a, b)
-                fill = _ellipse_fill(xc, yc, a, b, color_tuple=(16, 185, 129))
-                danh_sach_pixel = fill + outline
-                self.canvas.cap_nhat_hinh_ve(danh_sach_pixel)
+                def ellipse_to_san_gen():
+                    outline = midpoint_ellipse(xc, yc, a, b)
+                    if outline:
+                        yield outline
+                    yield from get_ellipse_fill_pixels(
+                        xc, yc, a, b, algorithm="to_san",
+                        color_tuple=(16, 185, 129), batch_size=999999
+                    )
+                self.canvas.cap_nhat_hinh_ve_co_hoat_anh(ellipse_to_san_gen())
                 return
             def ellipse_gen():
                 outline = midpoint_ellipse(xc, yc, a, b)
                 if outline:
                     yield outline
-                if self._selected_algorithm == "scanline":
-                    yield from _ellipse_fill_scanline(xc, yc, a, b, color_tuple=(16, 185, 129))
-                else:
-                    yield from _ellipse_fill_flood(xc, yc, a, b, color_tuple=(16, 185, 129), batch_size=400)
+                yield from get_ellipse_fill_pixels(
+                    xc, yc, a, b, algorithm=self._selected_algorithm,
+                    color_tuple=(16, 185, 129), batch_size=400
+                )
             self.canvas.cap_nhat_hinh_ve_co_hoat_anh(ellipse_gen())
             return

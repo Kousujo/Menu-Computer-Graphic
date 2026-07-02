@@ -261,7 +261,7 @@ def flood_fill(start_x, start_y, is_inside_boundary, color_tuple=(3, 105, 161), 
     return pixels
 
 
-def scanline_polygon_fill_tung_buoc(vertices, color_tuple=(3, 105, 161)):
+def scanline_polygon_fill_animation(vertices, color_tuple=(3, 105, 161)):
     """
     Generator: yield từng dòng scanline của thuật toán Scanline Fill.
     Mỗi lần yield là một list pixel của một hàng y.
@@ -299,7 +299,7 @@ def scanline_polygon_fill_tung_buoc(vertices, color_tuple=(3, 105, 161)):
             yield row
 
 
-def flood_fill_tung_buoc(start_x, start_y, is_inside_boundary,
+def flood_fill_animation(start_x, start_y, is_inside_boundary,
                           color_tuple=(3, 105, 161), max_pixels=50000, batch_size=300):
     """
     Generator: yield từng batch pixel (~batch_size) của thuật toán Loang (Flood Fill BFS).
@@ -328,15 +328,23 @@ def flood_fill_tung_buoc(start_x, start_y, is_inside_boundary,
             yield batch
 
 
-if __name__ == "__main__":
-    # Test check cho cac thuat toan vua duoc them (ponytail: test nhanh khong can framework)
-    test_vertices = [(0, 0), (4, 0), (4, 4), (0, 4)] # Hinh vuong
-    assert is_point_in_convex_polygon(2, 2, test_vertices) == True, "Diem o giua phai trong da giac"
-    assert is_point_in_convex_polygon(5, 5, test_vertices) == False, "Diem ben ngoai phai ngoai da giac"
-    assert is_point_in_polygon(2, 2, test_vertices) == True, "Diem o giua phai trong da giac (Jordan)"
-    assert is_point_in_polygon(5, 5, test_vertices) == False, "Diem ngoai phai ngoai da giac (Jordan)"
-    scanline_px = scanline_polygon_fill(test_vertices)
-    assert len(scanline_px) > 0, "Scanline fill phai tra ve cac pixel"
-    flood_px = flood_fill(2, 2, lambda x, y: 0 <= x <= 4 and 0 <= y <= 4)
-    assert len(flood_px) > 0, "Flood fill phai loang duoc pixel"
-    print("Moi bai kiem tra thiet lap thành cong!")
+# ==============================================================================
+# GENERIC SCANLINE FILLER — accepts bounds generator, emits pixel rows
+# ==============================================================================
+
+def fill_horizontal_lines_animation(bounds_generator, color_tuple=(3, 105, 161)):
+    """
+    Generic scanline fill engine.
+    Accepts a generator that yields (y, x_start, x_end) math bounds tuples.
+    Handles pixel loop internally and yields each completed row list.
+    Knows nothing about the shape — pure algorithm.
+    """
+    for y, x_start, x_end in bounds_generator:
+        if x_start > x_end:
+            continue
+        row = []
+        for x in range(x_start, x_end + 1):
+            row.append((x, y, color_tuple))
+        if row:
+            yield row
+

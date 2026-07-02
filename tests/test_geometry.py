@@ -9,68 +9,10 @@ if PROJECT_ROOT not in sys.path:
 
 from core.geometry import (
     ToaDo2D,
-    get_triangle_pixels,
-    get_rectangle_pixels,
-    get_parallelogram_pixels,
-    get_rhombus_pixels,
-    get_isosceles_trapezoid_pixels,
-    get_star_pixels,
+    STamGiac,
+    DienTich,
     get_circle_pixels,
-    get_target_pixels,
-    get_flower_8_petals_pixels,
-    get_flower_24_petals_pixels,
-    get_wheel_with_spokes_pixels,
-    get_circular_pattern_8_petals_pixels,
-    get_star_with_inner_circle_pixels,
-    get_line_function_pixels,
-    get_quadratic_function_pixels,
-    get_cubic_function_pixels,
-    get_rational_1_1_pixels,
-    get_rational_2_1_pixels,
-    DrawPoly,
-    Circle3P,
-    Arc3P,
 )
-
-
-class TestTriangle:
-    def test_invalid_triangle(self):
-        assert get_triangle_pixels(0, 0, 1, 1, 3) == []
-
-    def test_valid_triangle(self):
-        assert len(get_triangle_pixels(0, 0, 5, 5, 5)) > 0
-
-    def test_zero_side(self):
-        assert get_triangle_pixels(0, 0, 0, 5, 5) == []
-
-
-class TestRectangle:
-    def test_basic(self):
-        assert len(get_rectangle_pixels(0, 0, 100, 50)) > 0
-
-    def test_square(self):
-        assert len(get_rectangle_pixels(0, 0, 50, 50)) > 0
-
-
-class TestParallelogram:
-    def test_basic(self):
-        assert len(get_parallelogram_pixels(0, 0, 100, 50, 10)) > 0
-
-
-class TestRhombus:
-    def test_basic(self):
-        assert len(get_rhombus_pixels(0, 0, 100, 60)) > 0
-
-
-class TestIsoscelesTrapezoid:
-    def test_basic(self):
-        assert len(get_isosceles_trapezoid_pixels(0, 0, 100, 60, 50)) > 0
-
-
-class TestStar:
-    def test_basic(self):
-        assert len(get_star_pixels(0, 0, 50, 20)) > 0
-
 
 class TestCircleGeometry:
     def test_positive_radius(self):
@@ -79,108 +21,83 @@ class TestCircleGeometry:
     def test_zero_radius(self):
         assert get_circle_pixels(0, 0, 0) == []
 
+class TestSTamGiac:
+    def test_right_triangle_3_4_5(self):
+        """Tam giác vuông 3-4-5 → diện tích = 6."""
+        A = ToaDo2D(0, 0)
+        B = ToaDo2D(3, 0)
+        C = ToaDo2D(0, 4)
+        assert STamGiac(A, B, C) == 6
 
-class TestTarget:
-    def test_basic(self):
-        assert len(get_target_pixels(0, 0, 50, 3)) > 0
+    def test_right_triangle_swapped_order(self):
+        """Thứ tự đỉnh không ảnh hưởng kết quả."""
+        A = ToaDo2D(0, 0)
+        B = ToaDo2D(0, 4)
+        C = ToaDo2D(3, 0)
+        assert STamGiac(B, C, A) == 6
 
-    def test_zero_rings(self):
-        assert get_target_pixels(0, 0, 50, 0) == []
+    def test_collinear_points(self):
+        """Ba điểm thẳng hàng → diện tích = 0."""
+        A = ToaDo2D(0, 0)
+        B = ToaDo2D(2, 2)
+        C = ToaDo2D(4, 4)
+        assert STamGiac(A, B, C) == 0
 
+    def test_arbitrary_triangle(self):
+        """Tam giác bất kỳ: (0,0), (5,1), (2,6) → 14."""
+        A = ToaDo2D(0, 0)
+        B = ToaDo2D(5, 1)
+        C = ToaDo2D(2, 6)
+        assert STamGiac(A, B, C) == 14
 
-class TestFlower8Petals:
-    def test_basic(self):
-        assert len(get_flower_8_petals_pixels(0, 0, 80, 30)) > 0
-
-
-class TestFlower24Petals:
-    def test_basic(self):
-        assert len(get_flower_24_petals_pixels(0, 0, 30, 80)) > 0
-
-
-class TestWheelWithSpokes:
-    def test_basic(self):
-        assert len(get_wheel_with_spokes_pixels(0, 0, 80)) > 0
-
-
-class TestCircularPattern8Petals:
-    def test_basic(self):
-        assert len(get_circular_pattern_8_petals_pixels(0, 0, 80)) > 0
-
-
-class TestStarWithInnerCircle:
-    def test_basic(self):
-        assert len(get_star_with_inner_circle_pixels(0, 0, 30, 70)) > 0
-
-
-class TestDrawPoly:
-    def test_less_than_3(self):
-        assert DrawPoly([ToaDo2D()]*2, 2, 0, 0, 50) == []
-
-    def test_triangle(self):
-        P = [ToaDo2D() for _ in range(3)]
-        pts = DrawPoly(P, 3, 0, 0, 50)
-        assert len(pts) > 0
-        for p in P:
-            assert p.x != 0 or p.y != 0
-
-    def test_hexagon(self):
-        P = [ToaDo2D() for _ in range(6)]
-        assert len(DrawPoly(P, 6, 0, 0, 50)) > 0
-
-    def test_zero_radius(self):
-        assert DrawPoly([ToaDo2D()]*3, 3, 0, 0, 0) == []
+    def test_negative_coordinates(self):
+        """Tọa độ âm: (-2,-2), (2,-2), (0,2) → 8."""
+        A = ToaDo2D(-2, -2)
+        B = ToaDo2D(2, -2)
+        C = ToaDo2D(0, 2)
+        assert STamGiac(A, B, C) == 8
 
 
-class TestCircle3P:
-    def test_collinear(self):
-        assert Circle3P(ToaDo2D(0,0), ToaDo2D(1,0), ToaDo2D(2,0)) == []
+class TestDienTich:
+    def test_unit_square(self):
+        """Hình vuông đơn vị → diện tích = 1."""
+        P = [ToaDo2D(0, 0), ToaDo2D(1, 0), ToaDo2D(1, 1), ToaDo2D(0, 1)]
+        assert DienTich(P, 4) == 1
 
-    def test_non_collinear(self):
-        assert len(Circle3P(ToaDo2D(0,0), ToaDo2D(4,0), ToaDo2D(2,3))) > 0
+    def test_rectangle_4x5(self):
+        """Hình chữ nhật 4×5 → diện tích = 20."""
+        P = [ToaDo2D(0, 0), ToaDo2D(4, 0), ToaDo2D(4, 5), ToaDo2D(0, 5)]
+        assert DienTich(P, 4) == 20
 
+    def test_triangle_via_polygon(self):
+        """Tam giác thông qua DienTich → 6."""
+        P = [ToaDo2D(0, 0), ToaDo2D(3, 0), ToaDo2D(0, 4)]
+        assert DienTich(P, 3) == 6
 
-class TestArc3P:
-    def test_collinear(self):
-        assert Arc3P(ToaDo2D(0,0), ToaDo2D(1,0), ToaDo2D(2,0)) == []
+    def test_less_than_3_vertices(self):
+        """Đa giác < 3 đỉnh → diện tích = 0."""
+        P = [ToaDo2D(0, 0), ToaDo2D(5, 5)]
+        assert DienTich(P, 2) == 0
+        assert DienTich(P, 1) == 0
+        assert DienTich([], 0) == 0
 
-    def test_non_collinear(self):
-        assert len(Arc3P(ToaDo2D(0,0), ToaDo2D(2,2), ToaDo2D(4,0))) > 0
+    def test_regular_hexagon_approx(self):
+        """Lục giác đều gần đúng: kiểm tra DienTich > 0."""
+        import math
+        P = []
+        for i in range(6):
+            angle = math.pi / 3 * i
+            P.append(ToaDo2D(math.cos(angle), math.sin(angle)))
+        area = DienTich(P, 6)
+        # Diện tích lục giác đều cạnh 1 ≈ 2.598 → int = 2
+        assert area == 2
 
+    def test_concave_polygon_still_works(self):
+        """Shoelace vẫn tính đúng cho đa giác lõm (diện tích hình học)."""
+        P = [ToaDo2D(0, 0), ToaDo2D(3, 0), ToaDo2D(1, 1), ToaDo2D(3, 3), ToaDo2D(0, 3)]
+        assert DienTich(P, 5) > 0
 
-class TestLineFunction:
-    def test_basic(self):
-        pts = get_line_function_pixels(0, 0, 1, 0, -15, 15, 0.1, 40)
-        assert len(pts) > 0
-
-
-class TestQuadraticFunction:
-    def test_basic(self):
-        pts = get_quadratic_function_pixels(0, 0, 1, 0, 0, -15, 15, 0.05, 40)
-        assert len(pts) > 0
-
-
-class TestCubicFunction:
-    def test_basic(self):
-        pts = get_cubic_function_pixels(0, 0, 1, 0, 0, 0, -15, 15, 0.05, 40)
-        assert len(pts) > 0
-
-
-class TestRational1_1:
-    def test_basic(self):
-        pts = get_rational_1_1_pixels(0, 0, 1, 0, 1, 0, -15, 15, 0.02, 40)
-        assert len(pts) > 0
-
-    def test_vertical_asymptote(self):
-        pts = get_rational_1_1_pixels(0, 0, 1, 0, 1, 0, -15, 15, 0.02, 40)
-        assert isinstance(pts, list)
-
-
-class TestRational2_1:
-    def test_basic(self):
-        pts = get_rational_2_1_pixels(0, 0, 1, 0, 0, 1, 0, -15, 15, 0.02, 40)
-        assert len(pts) > 0
-
-    def test_vertical_asymptote(self):
-        pts = get_rational_2_1_pixels(0, 0, 1, 0, 0, 1, 0, -15, 15, 0.02, 40)
-        assert isinstance(pts, list)
+    def test_polygon_with_negative_coordinates(self):
+        """Đa giác có tọa độ âm."""
+        P = [ToaDo2D(-2, -2), ToaDo2D(2, -2), ToaDo2D(2, 2), ToaDo2D(-2, 2)]
+        assert DienTich(P, 4) == 16

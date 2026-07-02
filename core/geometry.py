@@ -1,152 +1,172 @@
-# core/geometry_2.py
-#
-# Mô-đun tô màu hình tròn và ellipse.
-# Mỗi hình có 3 thuật toán: to_san (bounding box brute-force),
-# scanline (quét dòng), loang (flood fill BFS).
-# Hình tròn và ellipse có registry riêng + 2 hàm dispatch:
-#   get_*_fill_pixels(...)         → list pixel
-#   get_*_fill_pixels_animated(...) → generator (animated)
+# core/geometry.py
 
 import math
 
+
 # ==============================================================================
-# HÌNH TRÒN — 3 thuật toán tô
+# TOẠ ĐỘ & DIỆN TÍCH
 # ==============================================================================
 
-def _circle_fill(xc: int, yc: int, R: int, color_tuple=(3, 105, 161)):
-    """Tô sẵn: duyệt bounding box, kiểm tra pt đường tròn."""
-    if R <= 0:
-        return []
-    pixels = []
-    R2 = R * R
-    for y in range(yc - R, yc + R + 1):
-        for x in range(xc - R, xc + R + 1):
-            if (x - xc) ** 2 + (y - yc) ** 2 <= R2:
-                pixels.append((x, y, color_tuple))
-    return pixels
+class ToaDo2D:
+    """Lớp biểu diễn điểm 2 chiều với tọa độ x, y."""
+    def __init__(self, x=0, y=0):
+        self.x = x
+        self.y = y
 
 
-def _circle_fill_scanline(xc: int, yc: int, R: int,
-                          color_tuple=(3, 105, 161)):
-    """Generator: yield từng dòng scanline của hình tròn."""
+def STamGiac(A, B, C):
+    """Tính diện tích tam giác ABC bằng cross product 2D."""
+    return int(0.5 * abs((B.x - A.x) * (C.y - A.y) - (C.x - A.x) * (B.y - A.y)))
+
+
+def DienTich(P, n):
+    """Tính diện tích đa giác lồi n đỉnh bằng công thức shoelace."""
+    if n < 3:
+        return 0
+    area = 0.0
+    for i in range(n):
+        x1, y1 = P[i].x, P[i].y
+        x2, y2 = P[(i + 1) % n].x, P[(i + 1) % n].y
+        area += x1 * y2 - x2 * y1
+    return int(0.5 * abs(area))
+
+
+# ==============================================================================
+# HÌNH TRÒN — toán học thuần tuý (không vòng lặp pixel, không màu)
+# ==============================================================================
+
+def _circle_bounds_generator(xc: int, yc: int, R: int):
+    """
+    Generator thuần toán học: tính biên scanline cho từng dòng của hình tròn.
+    Yields (y, x_start, x_end) — chưa có pixel, chưa có màu.
+    Dùng int(round(...)) để tránh clipping pixel.
+    """
     if R <= 0:
         return
+    R2 = R * R
     for dy in range(-R, R + 1):
-        dx = int(math.sqrt(R * R - dy * dy))
-        row = []
-        for x in range(xc - dx, xc + dx + 1):
-            row.append((x, yc + dy, color_tuple))
-        yield row
+        dx = int(round(math.sqrt(R2 - dy * dy)))
+        yield (yc + dy, xc - dx, xc + dx)
 
 
-def _circle_fill_flood(xc: int, yc: int, R: int,
-                       color_tuple=(3, 105, 161), batch_size=300):
-    """Generator: yield từng batch BFS từ tâm hình tròn."""
+def _circle_inside_condition(xc: int, yc: int, R: int):
+    """Trả về lambda kiểm tra điểm (x, y) có nằm trong hình tròn không."""
     if R <= 0:
-        return
+        return lambda x, y: False
     R2 = R * R
-    from core.algorithms import flood_fill_tung_buoc as flood_fill_animated
-    yield from flood_fill_animated(
-        xc, yc,
-        lambda x, y: (x - xc) ** 2 + (y - yc) ** 2 <= R2,
-        color_tuple, batch_size=batch_size
-    )
+    return lambda x, y: (x - xc) ** 2 + (y - yc) ** 2 <= R2
 
 
-_CIRCLE_FILL_ALGORITHMS = {
-    "to_san":   _circle_fill,
-    "scanline": _circle_fill_scanline,
-    "loang":    _circle_fill_flood,
-}
+# ==============================================================================
+# HÌNH ELLIPSE — toán học thuần tuý (không vòng lặp pixel, không màu)
+# ==============================================================================
 
+def _ellipse_bounds_generator(xc: int, yc: int, a: int, b: int):
+    """
+    Generator thuần toán học: tính biên scanline cho từng dòng của ellipse.
+    Yields (y, x_start, x_end) — chưa có pixel, chưa có màu.
+    """
+    if a <= 0 or b <= 0:
+        return
+    a2 = a * a
+    b2 = b * b
+    for dy in range(-b, b + 1):
+        if b2 == 0:
+            continue
+        dx = int(round(math.sqrt(max(0, a2 * (1 - (dy * dy) / b2)))))
+        yield (yc + dy, xc - dx, xc + dx)
+
+
+def _ellipse_inside_condition(xc: int, yc: int, a: int, b: int):
+    """Trả về lambda kiểm tra điểm (x, y) có nằm trong ellipse không."""
+    if a <= 0 or b <= 0:
+        return lambda x, y: False
+    a2, b2 = a * a, b * b
+    vung_chua = a2 * b2
+    return lambda x, y: b2 * ((x - xc) ** 2) + a2 * ((y - yc) ** 2) <= vung_chua
+
+
+# ==============================================================================
+# COORDINATORS — định tuyến toán học → thuật toán generic (không logic fill)
+# ==============================================================================
 
 def get_circle_fill_pixels(xc: int, yc: int, R: int,
                            algorithm: str = "loang",
                            color_tuple=(3, 105, 161),
                            batch_size=300):
-    """Generator điều phối cho hình tròn (animated).
-    algorithm: "scanline" | "loang"
     """
-    func = _CIRCLE_FILL_ALGORITHMS.get(algorithm)
-    if func is None:
-        print(f"Lỗi: Thuật toán '{algorithm}' không có animation. Dùng 'loang' thay thế.")
-        func = _circle_fill_flood
-    # ponytail: scanline không nhận batch_size, loang thì có
+    Generator điều phối cho hình tròn.
+    Chỉ định tuyến: forward công thức toán sang engine tô trong core.algorithms.
+
+    algorithm:
+      "scanline" → fill_horizontal_lines_animation với bounds generator
+      "loang"    → flood_fill_animation với inside condition + batch_size
+      "to_san"   → flood_fill_animation với batch_size cực lớn (tô tức thì)
+    """
+    if R <= 0:
+        return
+
+    from core.algorithms import fill_horizontal_lines_animation, flood_fill_animation
+
     if algorithm == "scanline":
-        yield from func(xc, yc, R, color_tuple)
-    else:
-        yield from func(xc, yc, R, color_tuple, batch_size=batch_size)
-
-
-# ==============================================================================
-# HÌNH ELLIPSE — 3 thuật toán tô
-# ==============================================================================
-
-def _ellipse_fill(xc: int, yc: int, a: int, b: int, color_tuple=(16, 185, 129)) -> list:
-    """Tô sẵn: duyệt bounding box, kiểm tra pt ellipse."""
-    if a <= 0 or b <= 0:
-        return []
-    pixels = []
-    a2, b2 = a * a, b * b
-    vung_chua = a2 * b2
-    for y in range(yc - b, yc + b + 1):
-        for x in range(xc - a, xc + a + 1):
-            if b2 * ((x - xc) ** 2) + a2 * ((y - yc) ** 2) <= vung_chua:
-                pixels.append((x, y, color_tuple))
-    return pixels
-
-
-def _ellipse_fill_scanline(xc: int, yc: int, a: int, b: int,
-                           color_tuple=(16, 185, 129)):
-    """Generator: yield từng dòng scanline của hình ellipse."""
-    if a <= 0 or b <= 0:
-        return
-    a2 = a * a
-    for dy in range(-b, b + 1):
-        dx = int(math.sqrt(max(0, a2 * (1 - (dy * dy) / (b * b)))))
-        row = []
-        for x in range(xc - dx, xc + dx + 1):
-            row.append((x, yc + dy, color_tuple))
-        yield row
-
-
-def _ellipse_fill_flood(xc: int, yc: int, a: int, b: int,
-                        color_tuple=(16, 185, 129), batch_size=300):
-    """Generator: yield từng batch BFS từ tâm ellipse."""
-    if a <= 0 or b <= 0:
-        return
-    a2, b2 = a * a, b * b
-    vung_chua = a2 * b2
-    from core.algorithms import flood_fill_tung_buoc as flood_fill_animated
-    yield from flood_fill_animated(
-        xc, yc,
-        lambda x, y: b2 * ((x - xc) ** 2) + a2 * ((y - yc) ** 2) <= vung_chua,
-        color_tuple, batch_size=batch_size
-    )
-
-
-_ELLIPSE_FILL_ALGORITHMS = {
-    "to_san":   _ellipse_fill,
-    "scanline": _ellipse_fill_scanline,
-    "loang":    _ellipse_fill_flood,
-}
+        yield from fill_horizontal_lines_animation(
+            _circle_bounds_generator(xc, yc, R),
+            color_tuple=color_tuple
+        )
+    elif algorithm == "to_san":
+        # ponytail: dùng flood fill với batch_size cực lớn → tô tức thì 1 batch
+        yield from flood_fill_animation(
+            xc, yc,
+            _circle_inside_condition(xc, yc, R),
+            color_tuple=color_tuple,
+            batch_size=999999
+        )
+    else:  # "loang" hoặc fallback
+        yield from flood_fill_animation(
+            xc, yc,
+            _circle_inside_condition(xc, yc, R),
+            color_tuple=color_tuple,
+            batch_size=batch_size
+        )
 
 
 def get_ellipse_fill_pixels(xc: int, yc: int, a: int, b: int,
                             algorithm: str = "loang",
                             color_tuple=(16, 185, 129),
                             batch_size=300):
-    """Generator điều phối cho hình ellipse (animated).
-    algorithm: "scanline" | "loang"
     """
-    func = _ELLIPSE_FILL_ALGORITHMS.get(algorithm)
-    if func is None:
-        print(f"Lỗi: Thuật toán '{algorithm}' không có animation. Dùng 'loang' thay thế.")
-        func = _ellipse_fill_flood
+    Generator điều phối cho hình ellipse.
+    Chỉ định tuyến: forward công thức toán sang engine tô trong core.algorithms.
+
+    algorithm:
+      "scanline" → fill_horizontal_lines_animation với bounds generator
+      "loang"    → flood_fill_animation với inside condition + batch_size
+      "to_san"   → flood_fill_animation với batch_size cực lớn (tô tức thì)
+    """
+    if a <= 0 or b <= 0:
+        return
+
+    from core.algorithms import fill_horizontal_lines_animation, flood_fill_animation
+
     if algorithm == "scanline":
-        yield from func(xc, yc, a, b, color_tuple)
-    else:
-        yield from func(xc, yc, a, b, color_tuple, batch_size=batch_size)
+        yield from fill_horizontal_lines_animation(
+            _ellipse_bounds_generator(xc, yc, a, b),
+            color_tuple=color_tuple
+        )
+    elif algorithm == "to_san":
+        yield from flood_fill_animation(
+            xc, yc,
+            _ellipse_inside_condition(xc, yc, a, b),
+            color_tuple=color_tuple,
+            batch_size=999999
+        )
+    else:  # "loang" hoặc fallback
+        yield from flood_fill_animation(
+            xc, yc,
+            _ellipse_inside_condition(xc, yc, a, b),
+            color_tuple=color_tuple,
+            batch_size=batch_size
+        )
 
 
 # ==============================================================================
